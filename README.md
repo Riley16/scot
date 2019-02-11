@@ -1,5 +1,6 @@
 # SCOT: Set Cover Optimal Teaching
 > Set Cover Optimal Teaching for Sequential Decision Making with Inverse Reinforcement Learning
+
 In this repository we hope to create the SCOT machine teaching algorithm for custom grid environments.
 
 ## References
