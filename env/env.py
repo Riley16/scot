@@ -30,8 +30,6 @@ class Grid(Object):
         self.r = 0
 
     def step(self, action:list[int, int]):
-        # assert legal action
-        assert(sum(action) <= 1)
         if sum(action) > 0:
             # update agent position
             self.agent = self._update_agent(action)
