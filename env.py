@@ -82,3 +82,5 @@ class Grid(object):
     def _is_terminal(self):
         ''' Whether the agent has reached the terminal state '''
         return (self.agent[0] == self.end[0]) and (self.agent[1] == self.end[1])
+
+

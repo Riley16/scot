@@ -74,3 +74,4 @@ class Wrapper(object):
             r, done = self.env.step(max(a_s))
             total_r += r
         return total_r
+
