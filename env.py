@@ -11,7 +11,7 @@ class Grid(object):
     '''
 
     def __init__(self, height:int, width:int, gamma:float, gray_sq:List[List[int]],
-        gray_r:float, white_r:float, term_r:float, weights=None, num_feat:int=2):
+        gray_r:float, white_r:float, term_r:float, weights=None, num_feat:int=2, start_corner=True, start_dist=None):
         ''' Initialize Grid environment '''
         # set metadata about mdp environment
         self.gamma = gamma
@@ -32,13 +32,23 @@ class Grid(object):
         for h, w in gray_sq:
             self.board[h, w] = gray_r
             self.s_features[self.grid_to_state((h, w))] = (0, 1)
-        #self.board[-1, -1] = term_r
 
         # set special positions
         # WILL WANT TO MAKE END STATE A SAMPLE FROM A DISTRIBUTION OF END STATES
         self.end = self.nS - 1
-        # WILL WANT TO MAKE START STATE A SAMPLE FROM A DISTRIBUTION OF START STATES
-        self.start = self.grid_to_state((0, 0))
+
+        # initialize start state either in upper-left grid corner or with sample from start state distribution
+        # uniformly sample over all states but terminal state if no distribution is input
+        if start_corner is True:
+            self.start = self.grid_to_state((0, 0))
+            self.start_dist = None
+        elif start_dist is None:
+            self.start_dist = np.array([1/(self.nS-1) for _ in range(self.nS-1)])
+            self.start = (np.cumsum(self.start_dist) > np.random.random()).argmax()
+        else:
+            self.start_dist = start_dist
+            self.start = (np.cumsum(start_dist) > np.random.random()).argmax()
+
         self.agent = self.start
         self.t = 0
         self.r = 0
@@ -79,8 +89,15 @@ class Grid(object):
         ''' Reset environment to initial state '''
         self.t = 0
         self.r = 0
+
+        if self.start_dist is None:
+            self.start = self.grid_to_state((0, 0))
+        else:
+            self.start = (np.cumsum(self.start_dist) > np.random.random()).argmax()
+
         self.agent = self.start
         self.log = [self.state_to_grid(self.agent)]
+        self.traj = []
 
     def state_to_grid(self, s):
         return s // self.board.shape[1], s % self.board.shape[1]

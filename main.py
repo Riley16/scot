@@ -8,9 +8,9 @@ def main():
     parser.add_argument('-height', type=int, default=3)
     parser.add_argument('-gamma', type=float, default=1.0)
     parser.add_argument('-gray_r', type=float, default=-10.0)
-    parser.add_argument('-white_r', type=float, default=0.0)
+    parser.add_argument('-white_r', type=float, default=-1.0)
     parser.add_argument('-term_r', type=float, default=10.0)
-    parser.add_argument('-n_episodes', type=float, default=3)
+    parser.add_argument('-n_episodes', type=float, default=5)
 
     args = parser.parse_args()
 
@@ -19,18 +19,21 @@ def main():
     # deterministic policy for testing
     policy = np.zeros((args.height*args.width, 5))
     policy[0:2, 3] = 1.0
-    policy[2:9, 4] = 1.0
+    policy[3:5, 3] = 1.0
+    policy[6:9, 3] = 1.0
+    policy[2, 4] = 1.0
+    policy[5, 4] = 1.0
     print(policy)
     # policy = None
 
     np.random.seed(2)
     env_wrapper = Wrapper(args.n_episodes, args.gamma, args.width, args.height,
-        args.gray_r, args.white_r, args.term_r, gray_sq=[], policy=policy, log=True)
+        args.gray_r, args.white_r, args.term_r, gray_sq=[], policy=policy, log=True, )
     
     print("Grid environment:")
     env_wrapper.print_env()
 
-    total_r = env_wrapper.eval_episodes()
+    total_r, trajectories = env_wrapper.eval_episodes()
 
     print("Average reward with initial stochastic policy across {} episodes: {}".format(
         args.n_episodes, sum(total_r) / float(len(total_r))))

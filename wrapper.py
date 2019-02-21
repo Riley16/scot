@@ -51,12 +51,15 @@ class Wrapper(object):
     def eval_episodes(self):
         ''' Evaluate episodes with policy '''
         total_r = []
+        trajectories = []
         for _ in range(self.n_episodes):
             self.env.reset()
             total_r.append(self._eval_episode())
+            trajectories.append(self.env.traj)
             if self.log:
                 print("Agent log: {}".format(self.env.log))
-        return total_r
+                print("Agent trajectory: {}".format(self.env.traj))
+        return total_r, trajectories
 
     #- internal functions -#
     def _eval_episode(self):
