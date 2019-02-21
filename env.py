@@ -11,7 +11,7 @@ class Grid(object):
     '''
 
     def __init__(self, height:int, width:int, gamma:float, gray_sq:List[List[int]],
-        gray_r:float, white_r:float, term_r:float):
+        gray_r:float, white_r:float, term_r:float, weights=None, num_feat:int=2):
         ''' Initialize Grid environment '''
         # set metadata about mdp environment
         self.gamma = gamma
@@ -20,11 +20,19 @@ class Grid(object):
         self.actions_to_grid = {a: g for a, g in enumerate(ACTIONS)}
         self.grid_to_actions = {g: a for a, g in enumerate(ACTIONS)}
 
+        # for now implement linear reward function weights in environment, should be associated with the agent
+        if weights is None:
+            self.weights = np.array([white_r, gray_r])
+        else:
+            self.weights = weights
+
+        self.s_features = {s: (1, 0) for s in range(self.nS)}
         # set up board
         self.board = np.full([height, width], white_r)
-        for x, y in gray_sq:
-            self.board[x, y] = gray_r
-        self.board[-1, -1] = term_r
+        for h, w in gray_sq:
+            self.board[h, w] = gray_r
+            self.s_features[self.grid_to_state((h, w))] = (0, 1)
+        #self.board[-1, -1] = term_r
 
         # set special positions
         # WILL WANT TO MAKE END STATE A SAMPLE FROM A DISTRIBUTION OF END STATES
@@ -55,16 +63,17 @@ class Grid(object):
                 new_pos[1] >= 0:
             # update agent position
             self.agent = successor
-            r = (self.gamma ** self.t) * self.board[self.state_to_grid(self.agent)]
-        else:
-            r = 0
 
+        r = self.reward(self.agent)
         self.log.append(self.state_to_grid(self.agent))
-        self.r += r
+        self.r = self.gamma * self.r + r
         self.t += 1
         self.traj.append((s, a, r, self.agent))
 
         return r, self._is_terminal()
+
+    def reward(self, s):
+        return np.dot(self.s_features[s], self.weights)
 
     def reset(self):
         ''' Reset environment to initial state '''
@@ -91,4 +100,4 @@ class Grid(object):
 
     def _is_terminal(self):
         ''' Whether the agent has reached the terminal state '''
-        return self.agent == self.end or self.t > 5
+        return self.agent == self.end #or self.t > 5

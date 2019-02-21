@@ -23,7 +23,7 @@ def main():
     print(policy)
     # policy = None
 
-    np.random.seed(1)
+    np.random.seed(2)
     env_wrapper = Wrapper(args.n_episodes, args.gamma, args.width, args.height,
         args.gray_r, args.white_r, args.term_r, gray_sq=[], policy=policy, log=True)
     
