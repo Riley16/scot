@@ -11,9 +11,28 @@ cooridor = np.zeros((3, cooridor_len))
 cooridor[0,:] = 1
 cooridor[2,:] = 1
 cooridor[1, -1] = 2 # terminal state
-print(cooridor)
+print(cooridor, "\n")
 
-# Task 2:
+# Task 3:
+grid_w = 10
+grid_h = 12
+loop_w = 6
+loop_h = 6
+loop = np.ones((grid_h, grid_w))
+vert_start= int((grid_h - loop_h) / 2)
+vert_end = int(((grid_h - loop_h) / 2) + loop_h)
+horz_start = int((grid_w - loop_w) / 2)
+horz_end = int(((grid_w - loop_w) / 2) + loop_w)
+loop[vert_start, horz_start:horz_end] = 0
+loop[vert_end, horz_start:horz_end] = 0
+loop[vert_start:vert_end + 1, horz_start] = 0
+loop[vert_start:vert_end + 1, horz_end] = 0
+
+loop[vert_end, horz_end - 1] = 2 # terminal state
+
+print(loop, "\n")
+
+# Task 3:
 grid_w = 10
 grid_h = 12
 zig_zag = np.ones((grid_h, grid_w))
