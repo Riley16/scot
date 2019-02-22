@@ -10,8 +10,8 @@ class Grid(object):
     _func    : internal functionality
     '''
 
-    def __init__(self, height:int, width:int, gamma:float, gray_sq:List[List[int]],
-        gray_r:float, white_r:float, term_r:float, weights=None, num_feat:int=2, start_corner=True, start_dist=None):
+    def __init__(self, height:int, width:int, gamma:float, gray_r:float, white_r:float,
+                 weights=None, gray_sq:List[List[int]]=None, num_feat:int=2, start_corner=True, start_dist=None):
         ''' Initialize Grid environment '''
         # set metadata about mdp environment
         self.gamma = gamma
@@ -28,6 +28,13 @@ class Grid(object):
 
         self.s_features = {s: (1, 0) for s in range(self.nS)}
         # set up board
+        # randomly initialize gray squares if not passed in
+        if not gray_sq:
+            n_gray_sq = int(np.sqrt(width * height))
+            gray_sq = list(zip(
+                np.random.random_integers(0, width-1, n_gray_sq), np.random.random_integers(0, height-1, n_gray_sq)))
+        print('Gray squares: {}'. format(gray_sq))
+
         self.board = np.full([height, width], white_r)
         for h, w in gray_sq:
             self.board[h, w] = gray_r
@@ -54,13 +61,11 @@ class Grid(object):
         self.r = 0
 
         # logging
-        self.log = self.state_to_grid(self.agent)
+        self.log = [self.state_to_grid(self.agent)]
         self.traj = []
 
-    # WILL NEED TO ADD FUNCTIONALITY FOR STOCHASTIC REWARDS AND TRANSITIONS, MAY WANT TO JUST DIRECTLY MAP STATES AND
-    # ACTIONS TO DISTRIBUTIONS OVER SUCCESSORS (AND REWARDS?) IN A NESTED DICTIONARY
-    # FOR OUR PURPOSES, THE EXPECTED REWARD IS WHAT IS DESCRIBED BY THE LINEAR REWARD FUNCTION, WHICH ALSO NEEDS TO BE ]
-    # ADDED
+    # WILL NEED TO ADD FUNCTIONALITY FOR STOCHASTIC TRANSITIONS, MAY WANT TO JUST DIRECTLY MAP STATES AND
+    # ACTIONS TO DISTRIBUTIONS OVER SUCCESSORS IN A NESTED DICTIONARY
 
     #- external functions -#
     def step(self, a: int):
@@ -80,7 +85,7 @@ class Grid(object):
         self.t += 1
         self.traj.append((s, a, r, self.agent))
 
-        return r, self._is_terminal()
+        return self.agent, r, self._is_terminal()
 
     def reward(self, s):
         return np.dot(self.s_features[s], self.weights)
@@ -98,6 +103,7 @@ class Grid(object):
         self.agent = self.start
         self.log = [self.state_to_grid(self.agent)]
         self.traj = []
+        return self.agent
 
     def state_to_grid(self, s):
         return s // self.board.shape[1], s % self.board.shape[1]

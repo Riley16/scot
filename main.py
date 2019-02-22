@@ -1,6 +1,9 @@
 import numpy as np
 import argparse
 from wrapper import Wrapper
+from agent import Agent
+from env import Grid
+from actions import ACTIONS
 
 def main():
     parser = argparse.ArgumentParser()
@@ -27,13 +30,17 @@ def main():
     # policy = None
 
     np.random.seed(2)
-    env_wrapper = Wrapper(args.n_episodes, args.gamma, args.width, args.height,
-        args.gray_r, args.white_r, args.term_r, gray_sq=[], policy=policy, log=True, )
+    # def __init__(self, height:int, width:int, gamma:float, gray_sq:List[List[int]],
+    #     gray_r:float, white_r:float, weights=None, num_feat:int=2, start_corner=True, start_dist=None):
+
+    env = Grid(args.height, args.width, args.gamma, gray_r=args.gray_r, white_r=args.white_r, start_corner=False)
+    agent = Agent(policy, args.height*args.width, len(ACTIONS))
+    env_wrapper = Wrapper(env, agent, log=True)
     
     print("Grid environment:")
     env_wrapper.print_env()
 
-    total_r, trajectories = env_wrapper.eval_episodes()
+    total_r, trajectories = env_wrapper.eval_episodes(args.n_episodes)
 
     print("Average reward with initial stochastic policy across {} episodes: {}".format(
         args.n_episodes, sum(total_r) / float(len(total_r))))
