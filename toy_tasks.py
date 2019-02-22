@@ -13,7 +13,7 @@ cooridor[2,:] = 1
 cooridor[1, -1] = 2 # terminal state
 print(cooridor, "\n")
 
-# Task 3:
+# Task 2:
 grid_w = 10
 grid_h = 12
 loop_w = 6
@@ -27,9 +27,7 @@ loop[vert_start, horz_start:horz_end] = 0
 loop[vert_end, horz_start:horz_end] = 0
 loop[vert_start:vert_end + 1, horz_start] = 0
 loop[vert_start:vert_end + 1, horz_end] = 0
-
 loop[vert_end, horz_end - 1] = 2 # terminal state
-
 print(loop, "\n")
 
 # Task 3:
