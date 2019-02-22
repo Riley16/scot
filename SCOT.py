@@ -1,7 +1,7 @@
 import numpy as np
 import util_algo as util
 
-def SCOT(mdp, s_start, R):
+def SCOT(mdp, s_start, w):
     # implements the Set Cover Optimal Teaching (SCOT) algorithm from
     # "Machine Teaching for Inverse Reinforcement Learning:
     # Algorithms and Applications", Brown and Niekum (2019)
@@ -9,7 +9,7 @@ def SCOT(mdp, s_start, R):
     #   Args:
     #       mdp:    MDP environment
     #       s_start:    list of possible initial states
-    #       R:      reward function of expert teacher agent
+    #       w:      weights of linear reward function of expert teacher agent (featurization computed by MDP environment)
 
     #   Returns:
     #       D:      list of maximally informative machine teaching trajectories

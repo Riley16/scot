@@ -81,7 +81,7 @@ class Grid(object):
         self.t += 1
         self.traj.append((s, a, r, successor))
 
-        return successor, r, self._is_terminal(successor)
+        return successor, r, self.is_terminal(successor)
 
     def reward(self, s):
         return np.dot(self.s_features[s], self.weights)
@@ -135,6 +135,10 @@ class Grid(object):
     def grid_to_state(self, g):
         return g[0] * self.board.shape[1] + g[1]
 
+    def is_terminal(self, s):
+        ''' Whether the agent has reached the terminal state '''
+        return s == self.end #or self.t > 5
+
     @property
     def state(self):
         ''' Returns the state of the environment '''
@@ -144,10 +148,6 @@ class Grid(object):
     def _update_pos(self, pos, action_grid):
         ''' Calculates updated position '''
         return pos[0] + action_grid[0], pos[1] + action_grid[1]
-
-    def _is_terminal(self, s):
-        ''' Whether the agent has reached the terminal state '''
-        return s == self.end #or self.t > 5
 
     def _init_trans(self, noise, det_trans):
         P = np.zeros((self.nS, self.nA, self.nS))

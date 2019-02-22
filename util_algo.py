@@ -9,7 +9,7 @@ def bellman(states, est, p, f, pi):
 
 
 # Value Iteration, returns optimal value function and implied optimal policy
-def value_iteration(P, nS, nA, gamma=0.9, tol=1e-3):
+def value_iteration(mdp, tol=1e-3):
     """
     Learn value function and policy by using value iteration method for a given
     gamma and environment.
@@ -26,23 +26,25 @@ def value_iteration(P, nS, nA, gamma=0.9, tol=1e-3):
     value_function: np.ndarray[nS]
     policy: np.ndarray[nS]
     """
-
+    nS = mdp.nS
+    nA = mdp.nA
+    gamma = mdp.gamma
     value_function = np.zeros(nS)
     policy = np.zeros(nS, dtype=int)
-    ############################
-    # YOUR IMPLEMENTATION HERE #
+
     k = 0
     eps = tol + 1
-    while eps > tol:
+    while eps > tol and k < 100:
         k = k + 1
         value_function_old = np.copy(value_function)
 
+        # NEED TO ACCOUNT FOR TERMINAL STATES?
         for s in range(nS):
-            policy[s] = max([(sum([prob * (r + gamma * value_function_old[new_state])
-                                   for (prob, new_state, r, term) in P[s][a]]), a) for a in range(nA)])[1]
+            policy[s] = max([(sum([mdp.P[s, a, succ] * (mdp.reward(succ) + gamma * value_function_old[succ]) * float(not mdp.is_terminal(s))
+                                   for succ in range(nS)]), a) for a in range(nA)])[1]
 
-            value_function[s] = sum([prob * (r + gamma * value_function_old[new_state])
-                                     for (prob, new_state, r, term) in P[s][policy[s]]])
+            value_function[s] = sum([mdp.P[s, int(policy[s]), succ] * (mdp.reward(succ) + gamma * value_function_old[succ]) * float(not mdp.is_terminal(s))
+                                     for succ in range(nS)])
 
         eps = max(np.absolute(value_function - value_function_old))
     print('VI iterations to convergence: %d' % k)
@@ -54,7 +56,6 @@ def value_iteration(P, nS, nA, gamma=0.9, tol=1e-3):
     # print(P)
     print('')
 
-    ############################
     return value_function, policy
 
 
