@@ -49,6 +49,11 @@ def main():
     # print(env.P)
     # print(agent.policy)
     # print(env.get_pol_trans(agent.policy))
+    # print(policy)
+    # det_pol = agent.stoch2det_policy(policy)
+    # print(det_pol)
+    # stoch_pol = agent.det2stoch_policy(det_pol)
+    # print(stoch_pol)
 
 if __name__ == "__main__":
     main()
