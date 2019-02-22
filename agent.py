@@ -11,8 +11,7 @@ class Agent(object):
 
     #- external functions -#
     def __init__(self, policy=None, nS=None, nA=None):
-        ''' Initialize wrapper for running the env '''
-
+        # initialize agent policy to uniformly random if no initial policy is specified
         if policy is None:
             policy = np.full([nS, nA], 1/nA)
         self.policy = policy

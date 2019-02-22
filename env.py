@@ -11,7 +11,7 @@ class Grid(object):
     '''
 
     def __init__(self, height:int, width:int, gamma:float, gray_r:float, white_r:float,
-                 weights=None, gray_sq:List[List[int]]=None, num_feat:int=2, start_corner=True, start_dist=None):
+                 weights=None, noise:float = 0.0, gray_sq:List[List[int]]=None, num_feat:int=2, start_corner=True, start_dist=None):
         ''' Initialize Grid environment '''
         # set metadata about mdp environment
         self.gamma = gamma
@@ -40,6 +40,12 @@ class Grid(object):
             self.board[h, w] = gray_r
             self.s_features[self.grid_to_state((h, w))] = (0, 1)
 
+        # transition matrix
+        # stochastic transitions following random step over any action with probability [noise] and following
+        # deterministic transition function det_trans() with probability 1 - [noise]
+        # in form of np array P[s, a, s'] giving the probability of transitioning from state s to s' after taking action a
+        self.P = self._init_trans(noise, self.det_trans)
+
         # set special positions
         # WILL WANT TO MAKE END STATE A SAMPLE FROM A DISTRIBUTION OF END STATES
         self.end = self.nS - 1
@@ -61,31 +67,36 @@ class Grid(object):
         self.r = 0
 
         # logging
-        self.log = [self.state_to_grid(self.agent)]
+        self.log = [self.state_to_grid(self.start)]
         self.traj = []
 
     # WILL NEED TO ADD FUNCTIONALITY FOR STOCHASTIC TRANSITIONS, MAY WANT TO JUST DIRECTLY MAP STATES AND
     # ACTIONS TO DISTRIBUTIONS OVER SUCCESSORS IN A NESTED DICTIONARY
+    def _init_trans(self, noise, det_trans):
+        P = np.zeros((self.nS, self.nA, self.nS))
+        for s in range(self.nS):
+            det_states = []
+            # get all states that can be transitioned to from state s
+            for a in range(self.nA):
+                det_states.append(det_trans(s, a))
+            for a in range(self.nA):
+                P[s, a, det_trans(s, a)] += 1.0 - noise
+                for slip_succ in det_states:
+                    P[s, a, slip_succ] += noise / self.nA
+        return P
 
     #- external functions -#
-    def step(self, a: int):
-        ''' Makes one time step in the environment '''
-        s = self.agent
-        new_pos = self._update_pos(self.state_to_grid(s), self.actions_to_grid[a])
-        successor = self.grid_to_state(new_pos)
-        # update position if action would not take the agent off the grid
-        if new_pos[0] < self.board.shape[0] and new_pos[1] < self.board.shape[1] and new_pos[0] >= 0 and \
-                new_pos[1] >= 0:
-            # update agent position
-            self.agent = successor
+    def step(self, s:int, a: int):
+        ''' Takes one step in the environment in response to action a '''
+        successor = (np.cumsum(self.P[s, a]) > np.random.random()).argmax()
 
-        r = self.reward(self.agent)
-        self.log.append(self.state_to_grid(self.agent))
+        r = self.reward(successor)
+        self.log.append(self.state_to_grid(successor))
         self.r = self.gamma * self.r + r
         self.t += 1
-        self.traj.append((s, a, r, self.agent))
+        self.traj.append((s, a, r, successor))
 
-        return self.agent, r, self._is_terminal()
+        return successor, r, self._is_terminal(successor)
 
     def reward(self, s):
         return np.dot(self.s_features[s], self.weights)
@@ -100,10 +111,27 @@ class Grid(object):
         else:
             self.start = (np.cumsum(self.start_dist) > np.random.random()).argmax()
 
-        self.agent = self.start
-        self.log = [self.state_to_grid(self.agent)]
+        self.log = [self.state_to_grid(self.start)]
         self.traj = []
-        return self.agent
+        return self.start
+
+    def det_trans(self, s: int, a: int):
+        ''' Takes one deterministic (noiseless or "slipless") step in the environment in response to action a '''
+        new_pos = self._update_pos(self.state_to_grid(s), self.actions_to_grid[a])
+        successor = self.grid_to_state(new_pos)
+        # update position if action would not take the agent off the grid
+        if new_pos[0] < self.board.shape[0] and new_pos[1] < self.board.shape[1] and new_pos[0] >= 0 and \
+                new_pos[1] >= 0:
+            # update agent position
+            s = successor
+        return s
+
+
+    def render(self):
+        ''' Outputs state to console '''
+        for h in range(self.board.shape[0]):
+            s = [str(val) for val in self.board[h, :]]
+            print('\t'.join(s))
 
     def state_to_grid(self, s):
         return s // self.board.shape[1], s % self.board.shape[1]
@@ -121,6 +149,7 @@ class Grid(object):
         ''' Calculates updated position '''
         return pos[0] + action_grid[0], pos[1] + action_grid[1]
 
-    def _is_terminal(self):
+    def _is_terminal(self, s):
         ''' Whether the agent has reached the terminal state '''
-        return self.agent == self.end #or self.t > 5
+        return s == self.end #or self.t > 5
+

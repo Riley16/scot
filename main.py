@@ -20,6 +20,7 @@ def main():
     print(args)
 
     # deterministic policy for testing
+    # agent moves from right to left across grid to rightmost edge and then moves down to lower right corner
     policy = np.zeros((args.height*args.width, 5))
     policy[0:2, 3] = 1.0
     policy[3:5, 3] = 1.0
@@ -33,12 +34,12 @@ def main():
     # def __init__(self, height:int, width:int, gamma:float, gray_sq:List[List[int]],
     #     gray_r:float, white_r:float, weights=None, num_feat:int=2, start_corner=True, start_dist=None):
 
-    env = Grid(args.height, args.width, args.gamma, gray_r=args.gray_r, white_r=args.white_r, start_corner=False)
+    env = Grid(args.height, args.width, args.gamma, gray_r=args.gray_r, white_r=args.white_r, start_corner=False, noise=0.0)
     agent = Agent(policy, args.height*args.width, len(ACTIONS))
     env_wrapper = Wrapper(env, agent, log=True)
     
     print("Grid environment:")
-    env_wrapper.print_env()
+    env.render()
 
     total_r, trajectories = env_wrapper.eval_episodes(args.n_episodes)
 

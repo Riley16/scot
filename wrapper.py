@@ -20,13 +20,6 @@ class Wrapper(object):
         self.agent = agent
         self.log = log
 
-    def print_env(self):
-        ''' Outputs state to console '''
-        board, *_ = self.env.state
-        for h in range(board.shape[0]):
-            s = [str(val) for val in board[h, :]]
-            print('\t'.join(s))
-
     def eval_episodes(self, n_episodes):
         ''' Evaluate episodes with policy '''
         total_r = []
@@ -42,13 +35,13 @@ class Wrapper(object):
 
     #- internal functions -#
     def _eval_episode(self):
-        ''' Evaluate one episode with policy '''
+        ''' Evaluate one episode between env and agent '''
         done = False
         total_r = 0
         s = self.env.reset()
         while not done:
             a = self.agent.get_action(s)
-            s, r, done = self.env.step(a)
+            s, r, done = self.env.step(s, a)
             total_r += r
         return total_r, self.env.traj
 
