@@ -34,7 +34,7 @@ def main():
     # def __init__(self, height:int, width:int, gamma:float, gray_sq:List[List[int]],
     #     gray_r:float, white_r:float, weights=None, num_feat:int=2, start_corner=True, start_dist=None):
 
-    env = Grid(args.height, args.width, args.gamma, gray_r=args.gray_r, white_r=args.white_r, start_corner=False, noise=0.0)
+    env = Grid(args.height, args.width, args.gamma, gray_r=args.gray_r, white_r=args.white_r, start_corner=False)
     agent = Agent(policy, args.height*args.width, len(ACTIONS))
     env_wrapper = Wrapper(env, agent, log=True)
     
@@ -45,6 +45,10 @@ def main():
 
     print("Average reward with initial stochastic policy across {} episodes: {}".format(
         args.n_episodes, sum(total_r) / float(len(total_r))))
+
+    # print(env.P)
+    # print(agent.policy)
+    # print(env.get_pol_trans(agent.policy))
 
 if __name__ == "__main__":
     main()

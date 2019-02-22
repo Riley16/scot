@@ -70,21 +70,6 @@ class Grid(object):
         self.log = [self.state_to_grid(self.start)]
         self.traj = []
 
-    # WILL NEED TO ADD FUNCTIONALITY FOR STOCHASTIC TRANSITIONS, MAY WANT TO JUST DIRECTLY MAP STATES AND
-    # ACTIONS TO DISTRIBUTIONS OVER SUCCESSORS IN A NESTED DICTIONARY
-    def _init_trans(self, noise, det_trans):
-        P = np.zeros((self.nS, self.nA, self.nS))
-        for s in range(self.nS):
-            det_states = []
-            # get all states that can be transitioned to from state s
-            for a in range(self.nA):
-                det_states.append(det_trans(s, a))
-            for a in range(self.nA):
-                P[s, a, det_trans(s, a)] += 1.0 - noise
-                for slip_succ in det_states:
-                    P[s, a, slip_succ] += noise / self.nA
-        return P
-
     #- external functions -#
     def step(self, s:int, a: int):
         ''' Takes one step in the environment in response to action a '''
@@ -126,6 +111,17 @@ class Grid(object):
             s = successor
         return s
 
+    # computes transition matrix of environment conditioned on stochastic policy
+    # stochastic policy input as numpy array policy[s, a] giving probability of taking action in state s
+    # returns transition matrix conditioned on policy as numpy array P[s, s'] giving probability of transitioning to
+    # state s' from state s under [policy]
+    def get_pol_trans(self, policy):
+        P_pol = np.zeros((self.nS, self.nS))
+        for s in range(self.nS):
+            for a in range(self.nA):
+                P_pol[s] += policy[s, a] * self.P[s, a]
+
+        return P_pol
 
     def render(self):
         ''' Outputs state to console '''
@@ -152,4 +148,17 @@ class Grid(object):
     def _is_terminal(self, s):
         ''' Whether the agent has reached the terminal state '''
         return s == self.end #or self.t > 5
+
+    def _init_trans(self, noise, det_trans):
+        P = np.zeros((self.nS, self.nA, self.nS))
+        for s in range(self.nS):
+            det_states = []
+            # get all states that can be transitioned to from state s
+            for a in range(self.nA):
+                det_states.append(det_trans(s, a))
+            for a in range(self.nA):
+                P[s, a, det_trans(s, a)] += 1.0 - noise
+                for slip_succ in det_states:
+                    P[s, a, slip_succ] += noise / self.nA
+        return P
 
