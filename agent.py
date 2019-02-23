@@ -25,15 +25,3 @@ class Agent(object):
     def get_action(self, s):
         return (np.cumsum(self.policy[s]) > np.random.random()).argmax()
 
-    def det2stoch_policy(self, det_pol):
-        stoch_pol = np.zeros((self.nS, self.nA))
-        for s in range(self.nS):
-            print(det_pol[s])
-            stoch_pol[s, int(det_pol[s])] = 1.0
-        return stoch_pol
-
-    def stoch2det_policy(self, stoch_pol):
-        det_pol = np.zeros(self.nS)
-        for s in range(self.nS):
-            det_pol[s] = stoch_pol[s].argmax()
-        return det_pol

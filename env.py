@@ -83,8 +83,10 @@ class Grid(object):
 
         return successor, r, self.is_terminal(successor)
 
-    def reward(self, s):
-        return np.dot(self.s_features[s], self.weights)
+    def reward(self, s, w=None):
+        if w is None:
+            return np.dot(self.s_features[s], self.weights)
+        return np.dot(self.s_features[s], w)
 
     def reset(self):
         ''' Reset environment to initial state '''
