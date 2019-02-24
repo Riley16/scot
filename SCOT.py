@@ -64,9 +64,10 @@ def SCOT(mdp, s_start, w):
                 triv_i.add(j)
     BEC = np.delete(BEC, list(triv_i), 0)
 
-    tmp = BEC[0:2]
-    BEC[0:2] = BEC[2:4]
-    BEC[2:4] = tmp
+    # tmp = np.copy(BEC[0:2])
+    # BEC[0:2] = np.copy(BEC[2:4])
+    # BEC[2:4] = tmp
+    print(BEC)
 
     # remove redundant half-space constraints with linear programming
     bounds = tuple([(None, None) for _ in range(w.shape[0])])
