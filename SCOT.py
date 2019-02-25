@@ -4,6 +4,44 @@ from scipy.optimize import linprog
 from agent import *
 from wrapper import *
 
+def refineBEC(w, BEC):
+    # remove all trivial (all zero) constraints
+    triv_i = []
+    for i in range(BEC.shape[0] - 1, -1, -1):
+        if all(BEC[i] == np.zeros(w.shape[0])):
+            triv_i.append(i)
+    BEC = np.delete(BEC, triv_i, 0)
+
+    # normalize BEC constraints
+    for i in range(BEC.shape[0]):
+        BEC[i] = BEC[i] / np.linalg.norm(BEC[i])
+
+    # remove duplicate BEC constraints
+    triv_i = set()
+    for i in range(BEC.shape[0]):
+        for j in range(BEC.shape[0] - 1, i, -1):
+            if all(BEC[i] == BEC[j]):
+                triv_i.add(j)
+    BEC = np.delete(BEC, list(triv_i), 0)
+
+    # remove redundant half-space constraints with linear programming
+    bounds = tuple([(None, None) for _ in range(w.shape[0])])
+    for i in range(BEC.shape[0] - 1, -1, -1):
+        c = -BEC[i]
+        A = np.delete(BEC, i, 0)
+        b = np.zeros(A.shape[0])
+        res = linprog(c, A_ub=A, b_ub=b, bounds=bounds, options={"disp": True})
+        # DOES THIS MAKE SENSE? DOES AN UNCONSTRAINED PROBLEM NECESSARILY INDICATE A PROBLEM, OR JUST THAT TOO MANY CONSTRAINTS HAVE BEEN REMOVED?
+        # if res.status:
+        #     print("Removal of linear redundancies in teacher BEC unsuccessful.")
+        #     exit()
+        if res.fun <= 0 and not res.status:
+            BEC = A
+
+    print("BEC", BEC)
+    return BEC
+
+
 def SCOT(mdp, s_start, w):
     # implements the Set Cover Optimal Teaching (SCOT) algorithm from
     # "Machine Teaching for Inverse Reinforcement Learning:
@@ -47,45 +85,11 @@ def SCOT(mdp, s_start, w):
         # test2 = test0@test1
         # test = np.ones((mdp.nS, mdp.nS))@phi_s
 
-    # remove all trivial (all zero) constraints
-    triv_i = []
-    for i in range(BEC.shape[0] - 1, -1, -1):
-        if all(BEC[i] == np.zeros(w.shape[0])):
-            triv_i.append(i)
-    BEC = np.delete(BEC, triv_i, 0)
+    BEC = refineBEC(mdp, w, teacher_pol, BEC)
 
-    # normalize BEC constraints
-    for i in range(BEC.shape[0]):
-        BEC[i] = BEC[i]/np.linalg.norm(BEC[i])
 
-    # remove duplicate BEC constraints
-    triv_i = set()
-    for i in range(BEC.shape[0]):
-        for j in range(BEC.shape[0]-1, i, -1):
-            if all(BEC[i] == BEC[j]):
-                triv_i.add(j)
-    BEC = np.delete(BEC, list(triv_i), 0)
+    # (1) compute candidate demonstration trajectories
 
-    # tmp = np.copy(BEC[0:2])
-    # BEC[0:2] = np.copy(BEC[2:4])
-    # BEC[2:4] = tmp
-    print(BEC)
-
-    # remove redundant half-space constraints with linear programming
-    bounds = tuple([(None, None) for _ in range(w.shape[0])])
-    for i in range(BEC.shape[0] - 1, -1, -1):
-        c = -BEC[i]
-        A = np.delete(BEC, i, 0)
-        b = np.zeros(A.shape[0])
-        res = linprog(c, A_ub=A, b_ub=b, bounds=bounds, options={"disp": True})
-        # DOES THIS MAKE SENSE? DOES AN UNCONSTRAINED PROBLEM NECESSARILY INDICATE A PROBLEM, OR JUST THAT TOO MANY CONSTRAINTS HAVE BEEN REMOVED?
-        # if res.status:
-        #     print("Removal of linear redundancies in teacher BEC unsuccessful.")
-        #     exit()
-        if res.fun <= 0 and not res.status:
-            BEC = A
-
-    # print(BEC)
     # STATISTICAL VALUES FOR NUMBER OF TRAJECTORIES WITH STOCHASTIC TRANSITIONS?
     m = 1
 
@@ -96,23 +100,41 @@ def SCOT(mdp, s_start, w):
 
     # FOR NOW USE ALL STATES,
     # LATER LIMIT TO JUST STATES WITH NON-ZERO START DISTRIBUTION PROBABILITIES
+
     for s in range(mdp.nS):
         demo_trajs += wrapper.eval_episodes(m, s)[1]
 
+    # (2) greedy set cover algorithm to compute maximally informative trajectories
+    D = set()
+    C = set()
+    """
+        the set cover problem is to identify the smallest sub-collection of S whose union equals the universe.
+        For example, consider the universe U={1,2,3,4,5} and the collection of sets S={{1,2,3},{2,4},{3,4},{4,5}}}
+        """
+    while len(BEC - C) > 0:
+        t_list = []  # collects the cardinality of the intersection between BEC(traj|pi*) and U \ S
+        BEC_list = []
+        for traj in demo_trajs:
+            BEC_traj = compute_traj_BEC(traj, mu, mu_sa)
+            BEC_list.append(BEC_traj)
+            BEC_traj.intersection(BEC - C)
+            t_list.append(len(BEC_traj))
+        t_greedy_index = t_list.index(max(t_list))
+        t_greedy = demo_trajs[t_greedy_index]  # argmax over t_list to find greedy traj
+        D = D.union(t_greedy)
+        C = C.union(BEC_list[t_greedy_index])
+
+    return D
+
+def compute_traj_BEC(traj, mu, mu_sa):
     BEC_traj = []
-    for traj in demo_trajs:
-        BEC_traj.append([])
-        for i in range(len(traj)):
-            BEC_traj.append(mu[s] - mu_sa[s, a])
-
-    D = BEC
+    for i in range(len(traj)):
+        (s, a, r, s_new) = traj[i]
+        BEC_traj.append(mu[s] - mu_sa[s, a])
+    return BEC_traj
 
 
 
-    # compute candidate demonstration trajectories
-
-
-    # greedy set cover algorithm to compute maximally informative trajectories
 
 
 
