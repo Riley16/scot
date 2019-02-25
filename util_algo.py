@@ -48,14 +48,6 @@ def value_iteration(mdp, tol=1e-3):
 
         eps = max(np.absolute(value_function - value_function_old))
     print('VI iterations to convergence: %d' % k)
-    # print('value function:')
-    # print(value_function)
-    # print('policy')
-    # print(policy)
-
-    # print(P)
-    print('')
-
     return value_function, policy
 
 
@@ -65,7 +57,10 @@ def get_feature_counts(mdp, policy, tol=1e-6):
     nS = mdp.nS
     nA = mdp.nA
     gamma = mdp.gamma
-    value_function = np.zeros(nS)
+
+    # get policy-conditioned transition model
+    P_pol = mdp.get_pol_trans(policy)
+
     # discounted expected feature counts under given policy for state s
     mu = np.zeros((nS, mdp.weights.shape[0]), dtype=float)
     # discounted expected feature counts mu_sa[s, a] after taking action a from state s
@@ -79,8 +74,11 @@ def get_feature_counts(mdp, policy, tol=1e-6):
         mu_old = np.copy(mu)
         for s in range(nS):
             mu[s] = mdp.s_features[s] + \
-                    gamma * sum([mdp.P[s, int(policy[s]), succ] * mu_old[succ] *
+                    gamma * sum([P_pol[s, succ] * mu_old[succ] *
                                 float(not mdp.is_terminal(s)) for succ in range(nS)])
+            # mu[s] = mdp.s_features[s] + \
+            #         gamma * sum([mdp.P[s, int(policy[s]), succ] * mu_old[succ] *
+            #                     float(not mdp.is_terminal(s)) for succ in range(nS)])
 
         eps = np.max(np.absolute(mu - mu_old))
 
@@ -92,19 +90,7 @@ def get_feature_counts(mdp, policy, tol=1e-6):
 
     print('Bellman iterations to convergence: %d' % k)
 
-    # print(P)
-    print('')
-
     return mu, mu_sa
-
-# equivalent BEC formulation, Ng and Russell, 2000
-def get_trans_mat(MDP, pol):
-    pass
-
-# remove redundant half-space constraints with linear programming
-
-
-# greedy set cover algorithm
 
 
 def det2stoch_policy(det_pol, nS, nA):
