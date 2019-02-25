@@ -4,6 +4,7 @@ from scipy.optimize import linprog
 from agent import *
 from wrapper import *
 
+
 def refineBEC(w, BEC):
     # remove all trivial (all zero) constraints
     triv_i = []
@@ -30,15 +31,10 @@ def refineBEC(w, BEC):
         c = -BEC[i]
         A = np.delete(BEC, i, 0)
         b = np.zeros(A.shape[0])
-        res = linprog(c, A_ub=A, b_ub=b, bounds=bounds, options={"disp": True})
-        # DOES THIS MAKE SENSE? DOES AN UNCONSTRAINED PROBLEM NECESSARILY INDICATE A PROBLEM, OR JUST THAT TOO MANY CONSTRAINTS HAVE BEEN REMOVED?
-        # if res.status:
-        #     print("Removal of linear redundancies in teacher BEC unsuccessful.")
-        #     exit()
+        res = linprog(c, A_ub=A, b_ub=b, bounds=bounds)
         if res.fun <= 0 and not res.status:
             BEC = A
 
-    print("BEC", BEC)
     return BEC
 
 
@@ -76,17 +72,17 @@ def SCOT(mdp, s_start, w):
 
     T_pi = mdp.get_pol_trans(teacher_pol)
     for a in range(mdp.nA):
+        BEC[a*mdp.nS:(a+1)*mdp.nS] = mu - mu_sa[:, a]
+        # FOR ANALYTICAL COMPUTATION BY NG REFERENCED IN BROWN AND NIEKUM (2019), CURRENTLY NOT WORKING, PROBABLY NOT NEEDED
         # pol_a = det2stoch_policy(np.full(mdp.nS, a), mdp.nS, mdp.nA)
         # T_a = mdp.get_pol_trans(pol_a)
         # # BEC[a*mdp.nS:(a+1)*mdp.nS] = (T_pi - T_a)@np.linalg.inv(np.eye(mdp.nS) - mdp.gamma*T_pi)@phi_s
-        BEC[a*mdp.nS:(a+1)*mdp.nS] = mu - mu_sa[:, a]
         # test0 = T_pi - T_a
         # test1 = np.linalg.inv(np.eye(mdp.nS) - mdp.gamma*T_pi)
         # test2 = test0@test1
         # test = np.ones((mdp.nS, mdp.nS))@phi_s
 
-    BEC = refineBEC(mdp, w, teacher_pol, BEC)
-
+    BEC = refineBEC(w, BEC)
 
     # (1) compute candidate demonstration trajectories
 
@@ -100,44 +96,50 @@ def SCOT(mdp, s_start, w):
 
     # FOR NOW USE ALL STATES,
     # LATER LIMIT TO JUST STATES WITH NON-ZERO START DISTRIBUTION PROBABILITIES
-
     for s in range(mdp.nS):
         demo_trajs += wrapper.eval_episodes(m, s)[1]
 
     # (2) greedy set cover algorithm to compute maximally informative trajectories
+    U = set()
+    for i in range(BEC.shape[0]):
+        U.add(tuple(BEC[i].tolist()))
     D = set()
     C = set()
     """
         the set cover problem is to identify the smallest sub-collection of S whose union equals the universe.
         For example, consider the universe U={1,2,3,4,5} and the collection of sets S={{1,2,3},{2,4},{3,4},{4,5}}}
         """
-    while len(BEC - C) > 0:
-        t_list = []  # collects the cardinality of the intersection between BEC(traj|pi*) and U \ S
+    while len(U - C) > 0:
+        t_list = []  # collects the cardinality of the intersection between BEC(traj|pi*) and U \ C
         BEC_list = []
         for traj in demo_trajs:
-            BEC_traj = compute_traj_BEC(traj, mu, mu_sa)
+            BEC_traj = compute_traj_BEC(traj, mu, mu_sa, mdp, w)
             BEC_list.append(BEC_traj)
-            BEC_traj.intersection(BEC - C)
+            BEC_traj = BEC_traj.intersection(U - C)
             t_list.append(len(BEC_traj))
         t_greedy_index = t_list.index(max(t_list))
         t_greedy = demo_trajs[t_greedy_index]  # argmax over t_list to find greedy traj
         D = D.union(t_greedy)
         C = C.union(BEC_list[t_greedy_index])
 
+    print(D)
     return D
 
-def compute_traj_BEC(traj, mu, mu_sa):
-    BEC_traj = []
+def compute_traj_BEC(traj, mu, mu_sa, mdp, w):
+    # compute BEC of trajectory as numpy array
+    BEC_traj_np = np.empty((mdp.nA * len(traj), w.shape[0]), dtype=float)
     for i in range(len(traj)):
         (s, a, r, s_new) = traj[i]
-        BEC_traj.append(mu[s] - mu_sa[s, a])
+        for b in range(mdp.nA):
+            test = mu[s] - mu_sa[s, b]
+            BEC_traj_np[i * len(traj) + b] = mu[s] - mu_sa[s, b]
+
+    # normalize and remove trival and redundant constraints from BEC of trajectory
+    BEC_traj_np = refineBEC(w, BEC_traj_np)
+
+    # convert BEC of trajectory to a set
+    BEC_traj = set()
+    for i in range(BEC_traj_np.shape[0]):
+        BEC_traj.add(tuple(BEC_traj_np[i].tolist()))
     return BEC_traj
-
-
-
-
-
-
-    return D
-
 
