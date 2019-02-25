@@ -88,13 +88,16 @@ class Grid(object):
             return np.dot(self.s_features[s], self.weights)
         return np.dot(self.s_features[s], w)
 
-    def reset(self):
-        ''' Reset environment to initial state '''
+    def reset(self, s_start=None):
+        ''' Reset environment to initial state of s_start if given, otherwise
+        sample from start state distribution, otherwise to upper corner of (0, 0) '''
         self.t = 0
         self.r = 0
 
-        if self.start_dist is None:
+        if self.start_dist is None and s_start is None:
             self.start = self.grid_to_state((0, 0))
+        elif s_start is not None:
+            self.start = s_start
         else:
             self.start = (np.cumsum(self.start_dist) > np.random.random()).argmax()
 

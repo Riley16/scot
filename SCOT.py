@@ -1,6 +1,8 @@
 import numpy as np
 from util_algo import *
 from scipy.optimize import linprog
+from agent import *
+from wrapper import *
 
 def SCOT(mdp, s_start, w):
     # implements the Set Cover Optimal Teaching (SCOT) algorithm from
@@ -36,9 +38,9 @@ def SCOT(mdp, s_start, w):
 
     T_pi = mdp.get_pol_trans(teacher_pol)
     for a in range(mdp.nA):
-        pol_a = det2stoch_policy(np.full(mdp.nS, a), mdp.nS, mdp.nA)
-        T_a = mdp.get_pol_trans(pol_a)
-        # BEC[a*mdp.nS:(a+1)*mdp.nS] = (T_pi - T_a)@np.linalg.inv(np.eye(mdp.nS) - mdp.gamma*T_pi)@phi_s
+        # pol_a = det2stoch_policy(np.full(mdp.nS, a), mdp.nS, mdp.nA)
+        # T_a = mdp.get_pol_trans(pol_a)
+        # # BEC[a*mdp.nS:(a+1)*mdp.nS] = (T_pi - T_a)@np.linalg.inv(np.eye(mdp.nS) - mdp.gamma*T_pi)@phi_s
         BEC[a*mdp.nS:(a+1)*mdp.nS] = mu - mu_sa[:, a]
         # test0 = T_pi - T_a
         # test1 = np.linalg.inv(np.eye(mdp.nS) - mdp.gamma*T_pi)
@@ -83,9 +85,29 @@ def SCOT(mdp, s_start, w):
         if res.fun <= 0 and not res.status:
             BEC = A
 
-    print(BEC)
+    # print(BEC)
+    # STATISTICAL VALUES FOR NUMBER OF TRAJECTORIES WITH STOCHASTIC TRANSITIONS?
+    m = 1
+
+    teacher = Agent(teacher_pol, mdp.nS, mdp.nA)
+    wrapper = Wrapper(mdp, teacher, False)
+
+    demo_trajs = []
+
+    # FOR NOW USE ALL STATES,
+    # LATER LIMIT TO JUST STATES WITH NON-ZERO START DISTRIBUTION PROBABILITIES
+    for s in range(mdp.nS):
+        demo_trajs += wrapper.eval_episodes(m, s)[1]
+
+    BEC_traj = []
+    for traj in demo_trajs:
+        BEC_traj.append([])
+        for i in range(len(traj)):
+            BEC_traj.append(mu[s] - mu_sa[s, a])
 
     D = BEC
+
+
 
     # compute candidate demonstration trajectories
 
