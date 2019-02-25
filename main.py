@@ -43,7 +43,7 @@ def main():
     # total_r, trajectories = env_wrapper.eval_episodes(args.n_episodes)
 
     # IS NOISE NEEDED FOR NON-SINGULAR MATRICES IN COMPUTATION OF BEC CONSTRAINTS?
-    env_Niekum = Grid(2, 3, 0.9, gray_r=-10, white_r=-1, start_corner=False, gray_sq=[[1, 1]], noise=0.0)
+    env_Niekum = Grid(2, 3, 0.9, gray_r=-2, white_r=-1, start_corner=False, gray_sq=[[1, 1]], noise=0.0)
     _, policy = value_iteration(env_Niekum)
     print(policy)
     policy = det2stoch_policy(policy, env_Niekum.nS, env_Niekum.nA)

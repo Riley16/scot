@@ -12,7 +12,7 @@ def refineBEC(w, BEC):
         if all(BEC[i] == np.zeros(w.shape[0])):
             triv_i.append(i)
     BEC = np.delete(BEC, triv_i, 0)
-
+    test=0
     # normalize BEC constraints
     for i in range(BEC.shape[0]):
         BEC[i] = BEC[i] / np.linalg.norm(BEC[i])
@@ -31,9 +31,10 @@ def refineBEC(w, BEC):
         c = -BEC[i]
         A = np.delete(BEC, i, 0)
         b = np.zeros(A.shape[0])
-        res = linprog(c, A_ub=A, b_ub=b, bounds=bounds)
-        if res.fun <= 0 and not res.status:
-            BEC = A
+        if A != [] and b != []:
+            res = linprog(c, A_ub=A, b_ub=b, bounds=bounds)
+            if res.fun <= 0 and not res.status:
+                BEC = A
 
     return BEC
 
@@ -103,7 +104,7 @@ def SCOT(mdp, s_start, w):
     U = set()
     for i in range(BEC.shape[0]):
         U.add(tuple(BEC[i].tolist()))
-    D = set()
+    D = []
     C = set()
     """
         the set cover problem is to identify the smallest sub-collection of S whose union equals the universe.
@@ -119,7 +120,7 @@ def SCOT(mdp, s_start, w):
             t_list.append(len(BEC_traj))
         t_greedy_index = t_list.index(max(t_list))
         t_greedy = demo_trajs[t_greedy_index]  # argmax over t_list to find greedy traj
-        D = D.union(t_greedy)
+        D.append(t_greedy)
         C = C.union(BEC_list[t_greedy_index])
 
     print(D)
@@ -132,7 +133,7 @@ def compute_traj_BEC(traj, mu, mu_sa, mdp, w):
         (s, a, r, s_new) = traj[i]
         for b in range(mdp.nA):
             test = mu[s] - mu_sa[s, b]
-            BEC_traj_np[i * len(traj) + b] = mu[s] - mu_sa[s, b]
+            BEC_traj_np[i * mdp.nA + b] = mu[s] - mu_sa[s, b]
 
     # normalize and remove trival and redundant constraints from BEC of trajectory
     BEC_traj_np = refineBEC(w, BEC_traj_np)
