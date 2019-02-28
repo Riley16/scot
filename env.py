@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 from actions import ACTIONS
 
 # Grid environment
@@ -10,43 +10,77 @@ class Grid(object):
     _func    : internal functionality
     '''
 
-    def __init__(self, height:int, width:int, gamma:float, gray_r:float, white_r:float,
-                 weights=None, noise:float = 0.0, gray_sq:List[List[int]]=None, num_feat:int=2, start_corner=True, start_dist=None):
-        ''' Initialize Grid environment '''
-        # set metadata about mdp environment
+    # def __init__(self, height:int, width:int, gamma:float, gray_r:float, white_r:float,
+    #              weights=None, noise:float = 0.0, gray_sq:List[List[int]]=None, num_feat:int=2, start_corner=True, start_dist=None):
+    def __init__(self, height:int, width:int, gamma:float, white_r:float,
+                features_sq:List[Dict]=None, noise:float=0.0, weights=None, start_corner=True, start_dist=None):
+        '''
+        Initialize Grid environment
+
+        Args:
+            height: board height
+            weight: board width
+            gamma: discount factor
+            features_sq: list of feature dictionaries in the following format:
+                {
+                    'color': str,
+                    'reward': float,
+                    'squares': List[List[int]]
+                }
+            noise: transition noise
+            weights: reward function weights
+            start_corner: whether to start from fixed location (or sample from start_dist)
+            start_dist: distribution of start states, if start_corner=False
+        
+        '''
+
+        #- Set metadata about MDP environment
         self.gamma = gamma
         self.nA = len(ACTIONS)
         self.nS = width*height
         self.actions_to_grid = {a: g for a, g in enumerate(ACTIONS)}
         self.grid_to_actions = {g: a for a, g in enumerate(ACTIONS)}
 
-        # for now implement linear reward function weights in environment, should be associated with the agent
+        #- Implement linear reward function weights in environment (associated with agent)
         if weights is None:
-            self.weights = np.array([white_r, gray_r])
+            self.weights = np.array([white_r] + [ft['reward'] for ft in features_sq], dtype=np.float32)
         else:
+            assert isinstance(weights, np.ndarray)
             self.weights = weights
 
-        self.s_features = {s: (1, 0) for s in range(self.nS)}
-        # set up board
-        # randomly initialize gray squares if not passed in
-        if not gray_sq:
-            n_gray_sq = int(np.sqrt(width * height))
-            gray_sq = list(zip(
-                np.random.random_integers(0, width-1, n_gray_sq), np.random.random_integers(0, height-1, n_gray_sq)))
-        print('Gray squares: {}'. format(gray_sq))
+        #- Initialize features and board
+        n_features = len(features_sq) + 1
+        white_ft = tuple(1 if i == 0 else 0 for i in range(n_features))
 
-        self.board = np.full([height, width], white_r)
-        for h, w in gray_sq:
-            self.board[h, w] = gray_r
-            self.s_features[self.grid_to_state((h, w))] = (0, 1)
+        self.s_features = {s: white_ft for s in range(self.nS)} # initialize all features to white squares
+        self.board = np.full([height, width], white_r, dtype=np.float32) # initialize all rewards to [white_r]
 
-        # transition matrix
+        #- Add additional features
+        for idx, ft in enumerate(features_sq, 1):
+            color = ft['color']
+            reward = ft['reward']
+            squares = ft['squares']
+            assert color != None
+            assert reward != None
+
+            if not squares:
+                n_color_sq = int(np.sqrt(width * height / n_features))
+                squares = list(zip(
+                    np.random.random_integers(0, width-1, n_color_sq), np.random.random_integers(0, height-1, n_color_sq)))
+            print('{} squares: {}'.format(color, squares))
+
+            ft_vec = tuple(1 if i == idx else 0 for i in range(n_features))
+            for h, w in squares:
+                self.board[h, w] = reward
+                self.s_features[self.grid_to_state((h, w))] = ft_vec
+
+        #- Transition matrix:
         # stochastic transitions following random step over any action with probability [noise] and following
         # deterministic transition function det_trans() with probability 1 - [noise]
         # in form of np array P[s, a, s'] giving the probability of transitioning from state s to s' after taking action a
         self.P = self._init_trans(noise, self.det_trans)
 
-        # set special positions
+        #- Set special positions
         # WILL WANT TO MAKE END STATE A SAMPLE FROM A DISTRIBUTION OF END STATES
         self.end = self.nS - 1
 
