@@ -10,8 +10,6 @@ class Grid(object):
     _func    : internal functionality
     '''
 
-    # def __init__(self, height:int, width:int, gamma:float, gray_r:float, white_r:float,
-    #              weights=None, noise:float = 0.0, gray_sq:List[List[int]]=None, num_feat:int=2, start_corner=True, start_dist=None):
     def __init__(self, height:int, width:int, gamma:float, white_r:float,
                 features_sq:List[Dict]=None, noise:float=0.0, weights=None, start_corner=True, start_dist=None):
         '''
@@ -81,10 +79,9 @@ class Grid(object):
         self.P = self._init_trans(noise, self.det_trans)
 
         #- Set special positions
-        # WILL WANT TO MAKE END STATE A SAMPLE FROM A DISTRIBUTION OF END STATES
         self.end = self.nS - 1
 
-        # initialize start state either in upper-left grid corner or with sample from start state distribution
+        #- Initialize start state: upper-left grid corner or from sample from start state distribution
         # uniformly sample over all states but terminal state if no distribution is input
         if start_corner is True:
             self.start = self.grid_to_state((0, 0))
@@ -96,11 +93,12 @@ class Grid(object):
             self.start_dist = start_dist
             self.start = (np.cumsum(start_dist) > np.random.random()).argmax()
 
+        #- Initialize agent attributes
         self.agent = self.start
         self.t = 0
         self.r = 0
 
-        # logging
+        #- Set up logging
         self.log = [self.state_to_grid(self.start)]
         self.traj = []
 

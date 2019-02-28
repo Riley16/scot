@@ -45,24 +45,23 @@ total_r, trajectories = env_wrapper.eval_episodes(args.n_episodes)
 
 
 # Brown and Niekum toy environment (2019)
-# our SCOT implementation currently handles cases of
+# Our SCOT implementation currently handles cases of
 #   gray_r    white_r
 #   -10         -1
 #   -2          -1
 #   -1          -1
 #   -1          -2
-# does not handle cases of
+# Does not handle cases of
 #   0           0  (may not be necessary)
 #   1           1  (may not be necessary)
 
-# pass in a list of dicts for non-white square colors
+# Pass in a list of dicts for non-white square colors
 features_Niekum = [{
         'color': 'gray',
         'reward': -10.0,
         'squares': [[1,1]]
     }]
 
-#  env_Niekum = Grid(2, 3, 0.9, gray_r=-10, white_r=-1, start_corner=False, gray_sq=[[1, 1]], noise=0.0)
 env_Niekum = Grid(2, 3, 0.9, white_r=-1, features_sq=features_Niekum, noise=0.0, start_corner=False)
 _, policy_Niekum = value_iteration(env_Niekum)
 print(policy_Niekum)
