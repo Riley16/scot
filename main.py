@@ -17,10 +17,6 @@ def main():
 
     print("Grid environment:")
     env.render()
-    # total_r, trajectories = env_wrapper_Niekum.eval_episodes(args.n_episodes)
-    #
-    # print("Average reward with initial stochastic policy across {} episodes: {}".format(
-    #     args.n_episodes, sum(total_r) / float(len(total_r))))
 
     SCOT(env_Niekum, None, env_Niekum.weights)
 

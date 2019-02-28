@@ -16,7 +16,7 @@ class Wrapper(object):
         ''' Initialize wrapper for running the env '''
 
         # initialize policy and env for evaluation
-        self.env = env # Grid(height, width, gamma, gray_sq, gray_r, white_r, term_r)
+        self.env = env
         self.agent = agent
         self.log = log
 
