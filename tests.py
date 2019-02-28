@@ -40,8 +40,7 @@ features_Vincent = [{
 env = Grid(args.height, args.width, args.gamma, white_r=args.white_r, features_sq=features_Vincent, start_corner=False)
 agent = Agent(policy_Vincent, args.height * args.width, len(ACTIONS))
 env_wrapper = Wrapper(env, agent, log=True)
-total_r, trajectories = env_wrapper.eval_episodes(args.n_episodes)
-total_r, trajectories = env_wrapper.eval_episodes(args.n_episodes)
+# total_r, trajectories = env_wrapper.eval_episodes(args.n_episodes)
 
 
 # Brown and Niekum toy environment (2019)
