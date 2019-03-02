@@ -9,16 +9,23 @@ from SCOT import SCOT
 from tests import *
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-env', choices=['basic', 'multiple', 'niekum'], default='niekum')
+    args = parser.parse_args()
+
     np.random.seed(2)
 
-    env = env_Niekum
-    policy = policy_Niekum
-    wrapper = env_wrapper_Niekum
+    if args.env == 'basic':
+        test = BasicGrid()
+    elif args.env == 'multiple':
+        test = MultipleFeatures()
+    else:
+        test = BrownNiekum()
 
-    print("Grid environment:")
-    env.render()
+    print("{} grid environment:".format(test.__class__.__name__))
+    test.env.render()
 
-    SCOT(env_Niekum, None, env_Niekum.weights)
+    SCOT(test.env, None, test.env.weights)
 
 if __name__ == "__main__":
     main()

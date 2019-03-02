@@ -11,7 +11,8 @@ class Grid(object):
     '''
 
     def __init__(self, height:int, width:int, gamma:float, white_r:float,
-                features_sq:List[Dict]=None, noise:float=0.0, weights=None, start_corner=True, start_dist=None):
+                features_sq:List[Dict]=None, noise:float=0.0, weights=None,
+                start_corner=True, start_dist=None, end_pos:Tuple=None):
         '''
         Initialize Grid environment
 
@@ -79,7 +80,10 @@ class Grid(object):
         self.P = self._init_trans(noise, self.det_trans)
 
         #- Set special positions
-        self.end = self.nS - 1
+        if end_pos == None:
+            self.end = self.nS - 1
+        else:
+            self.end = self.grid_to_state(end_pos)
 
         #- Initialize start state: upper-left grid corner or from sample from start state distribution
         # uniformly sample over all states but terminal state if no distribution is input
@@ -91,7 +95,12 @@ class Grid(object):
             self.start = (np.cumsum(self.start_dist) > np.random.random()).argmax()
         else:
             self.start_dist = start_dist
-            self.start = (np.cumsum(start_dist) > np.random.random()).argmax()
+            self.start = (np.cumsum(self.start_dist) > np.random.random()).argmax()
+
+        #- Check that start != end:
+        # if self.end == self.nS - 1, then this will never execute, so this is guaranteed to work
+        if self.start == self.end:
+            self.start = self.nS - 1
 
         #- Initialize agent attributes
         self.agent = self.start
