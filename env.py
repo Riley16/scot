@@ -45,7 +45,7 @@ class Grid(object):
         else:
             assert isinstance(weights, np.ndarray)
             self.weights = weights
-
+            
         #- Initialize features and board
         n_features = len(features_sq) + 1
         white_ft = tuple(1 if i == 0 else 0 for i in range(n_features))

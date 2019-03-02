@@ -33,20 +33,20 @@ class BasicGrid(object):
 
 
 class MultipleFeatures(object):
-    ''' Grid environment with multiple features. '''
+    ''' Grid environment with multiple features (replica of BrownNiekum but with 3 features). '''
     def __init__(self):
         features = [
             {
                 'color': 'gray',
                 'reward': -10.0,
-                'squares': [[0, 1]]
+                'squares': [[1, 1]]
             },
             {
-                'color': 'red',
-                'reward': 10.0,
-                'squares': [[1, 1]]
+                'color': 'fake_white',
+                'reward': -1.0,
+                'squares': [[1, 0]]
             }]
-        self.env = Grid(3, 3, 0.9, white_r=5.0, features_sq=features, noise=0.0, weights=None, start_corner=True)
+        self.env = Grid(2, 3, 0.9, white_r=-1, features_sq=features, noise=0.0, weights=None, start_corner=True)
         self.policy = self.init_policy()
         self.agent = Agent(self.policy, self.env.nS, self.env.nA)
         self.wrapper = Wrapper(self.env, self.agent, log=True)

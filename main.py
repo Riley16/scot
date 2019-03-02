@@ -25,7 +25,6 @@ def main():
     print("{} grid environment:".format(test.__class__.__name__))
     test.env.render()
 
-    # SCOT(env_Niekum, None, env_Niekum.weights)
     SCOT(test.env, None, test.env.weights)
 
 if __name__ == "__main__":
