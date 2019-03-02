@@ -15,25 +15,24 @@ class BasicGrid(object):
                 'reward': 10.0,
                 'squares': None
             }]
-        self.env = Grid(3, 3, 0.75, white_r=1.0, features_sq=features, start_corner=True, noise=0.0, weights=None)
+        self.env = Grid(4, 4, 0.75, white_r=1.0, features_sq=features, start_corner=True, noise=0.0, weights=None)
         self.policy = self.init_policy()
-        self.agent = Agent(self.policy, 5 * 5, len(ACTIONS))
+        self.agent = Agent(self.policy, self.env.nS, self.env.nA)
         self.wrapper = Wrapper(self.env, self.agent, log=True)
 
     def init_policy(self):
         ''' Agent moves left->right, up->down. '''
-        policy = np.zeros((3 * 3, 3))
-        policy[0:2, 3] = 2
-        policy[3:5, 3] = 2
-        policy[6:9, 3] = 2
-        policy[2, 4] = 3
-        policy[5, 4] = 3
+        policy = np.full(16, 2)
+        policy[3] = 3
+        policy[7] = 3
+        policy[11] = 3
+        policy[15] = 3
         print('Basic policy: {}'.format(policy))
         return policy
 
 
 class MultipleFeatures(object):
-    ''' Grid environment with multiple features (replica of BrownNiekum but with 3 features). '''
+    ''' Grid environment with multiple features. '''
     def __init__(self):
         features = [
             {
@@ -43,7 +42,7 @@ class MultipleFeatures(object):
             },
             {
                 'color': 'fake_white',
-                'reward': -1.0,
+                'reward': -10.0,
                 'squares': [[1, 0]]
             }]
         self.env = Grid(2, 3, 0.9, white_r=-1, features_sq=features, noise=0.0, weights=None, start_corner=True)
