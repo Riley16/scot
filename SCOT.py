@@ -6,20 +6,22 @@ from wrapper import *
 
 
 def SCOT(mdp, s_start, w):
-    # implements the Set Cover Optimal Teaching (SCOT) algorithm from
-    # "Machine Teaching for Inverse Reinforcement Learning:
-    # Algorithms and Applications", Brown and Niekum (2019)
+    """
+    Implements the Set Cover Optimal Teaching (SCOT) algorithm from
+    "Machine Teaching for Inverse Reinforcement Learning:
+    Algorithms and Applications", Brown and Niekum (2019)
 
-    #   Args:
-    #       mdp:    MDP environment
-    #       s_start:    list of possible initial states
-    #       w:      weights of linear reward function of expert teacher agent (featurization computed by MDP environment) as a numpy array
+    Args:
+        mdp: MDP environment
+        s_start: list of possible initial states
+        w: weights of linear reward function of expert teacher agent
+            (featurization computed by MDP environment) as a numpy array
 
-    #   Returns:
-    #       D:      list of maximally informative machine teaching trajectories
-    #               represented as lists of (s, a, r, s') experience tuples
+    Returns:
+        D: list of maximally informative machine teaching trajectories
+            represented as lists of (s, a, r, s') experience tuples
+    """
 
-    # compute optimal behavioral equivalence class (BEC) of optimal policy pi_opt under R
     # compute optimal policy pi_opt
     _, teacher_pol = value_iteration(mdp)  # using variation of VI code from HW1
     print("Teacher policy: {}".format(teacher_pol))
