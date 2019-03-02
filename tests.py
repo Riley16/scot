@@ -15,14 +15,14 @@ class BasicGrid(object):
                 'reward': 10.0,
                 'squares': None
             }]
-        self.env = Grid(5, 5, 0.75, white_r=1.0, features_sq=features, start_corner=True, noise=0.0, weights=None)
+        self.env = Grid(3, 3, 0.75, white_r=1.0, features_sq=features, start_corner=True, noise=0.0, weights=None)
         self.policy = self.init_policy()
         self.agent = Agent(self.policy, 5 * 5, len(ACTIONS))
         self.wrapper = Wrapper(self.env, self.agent, log=True)
 
     def init_policy(self):
         ''' Agent moves left->right, up->down. '''
-        policy = np.zeros((args.height * args.width, 5))
+        policy = np.zeros((3 * 3, 3))
         policy[0:2, 3] = 2
         policy[3:5, 3] = 2
         policy[6:9, 3] = 2
