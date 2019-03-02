@@ -76,7 +76,7 @@ class BrownNiekum(object):
                 'reward': -10.0,
                 'squares': [[1, 1]]
             }]
-        self.env = Grid(2, 3, 0.9, white_r=1, features_sq=features, noise=0.0, start_corner=False)
+        self.env = Grid(2, 3, 0.9, white_r=-1, features_sq=features, noise=0.0, start_corner=False)
         self.policy = self.init_policy()
         self.agent = Agent(self.policy, self.env.nS, self.env.nA)
         self.wrapper = Wrapper(self.env, self.agent, log=True)
