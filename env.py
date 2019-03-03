@@ -10,8 +10,9 @@ class Grid(object):
     _func    : internal functionality
     '''
 
-    def __init__(self, height:int, width:int, gamma:float, white_r:float,
-                features_sq:List[Dict]=None, noise:float=0.0, weights=None,
+    def __init__(self, height:int, width:int, gamma:float, white_r:float=None,
+                features_sq:List[Dict]=None, gen_features:List[List]=None, n_features:int=None,
+                noise:float=0.0, weights=None,
                 start_corner=True, start_dist=None, end_pos:Tuple=None):
         '''
         Initialize Grid environment
@@ -26,7 +27,8 @@ class Grid(object):
                     'reward': float,
                     'squares': List[List[int]]
                 }
-            noise: transition noise
+            noise: transition noise as proportion of probability mass uniformly distributed over transitioning to all
+                    states reachable by any action for a given state
             weights: reward function weights
             start_corner: whether to start from fixed location (or sample from start_dist)
             start_dist: distribution of start states, if start_corner=False
@@ -41,37 +43,63 @@ class Grid(object):
         self.grid_to_actions = {g: a for a, g in enumerate(ACTIONS)}
 
         #- Implement linear reward function weights in environment (associated with agent)
+
         if weights is None:
-            self.weights = np.array([white_r] + [ft['reward'] for ft in features_sq], dtype=np.float32)
+            if white_r is not None and features_sq is not None:
+                self.weights = np.array([white_r] + [ft['reward'] for ft in features_sq], dtype=np.float32)
+            else:
+                # random initialization of reward weights in [-1,0]^n_features
+                # MAY RUN INTO INITIALIZATIONS WITH INDEFINITE EPISODE LENGTH FOR OPTIMAL POLICIES
+                # ONE SOLUTION IS TO SET THE REWARD WEIGHTS AS NEGATIVE AND SET THE STATES FEATURES FOR THE TERMINAL
+                # STATES TO ENSURE MAXIMAL REWARD AT THE TERMINAL STATES AND THAT ONLY BY REACHING THE TERMINAL STATES
+                # CAN NEGATIVE REWARD STOP BEING ACCUMULATED, MAY NOT GUARANTEE TERMINATING OPTIMAL EPISODES
+                self.n_features = n_features
+                self.weights = -np.random.rand(self.n_features)
+                print(self.weights)
         else:
             assert isinstance(weights, np.ndarray)
             self.weights = weights
 
         #- Initialize features and board
-        n_features = len(features_sq) + 1
-        white_ft = tuple(1 if i == 0 else 0 for i in range(n_features))
+        if gen_features is not None:
+            # feature initialization if gen_features is specified as a list of lists of lists for height/width coordinate
+            # specifications of features
+            self.board = np.full((height, width), 0)
+            if isinstance(gen_features[0][0], List) or isinstance(gen_features[0][0], Tuple):
+                self.s_features = [np.array(gen_features[h][w])
+                                   for h in range(len(gen_features)) for w in range(len(gen_features[0]))]
+                print(self.s_features)
+            # feature initialization if features are specified directly by state
+            else:
+                self.s_features = [np.array(gen_features[s]) for s in range(self.nS)]
+            self.board = np.array([[self.reward(self.grid_to_state((h, w)))
+                                    for w in range(width)] for h in range(height)], dtype=np.float32)
+        elif features_sq is not None:
+            n_features = len(features_sq) + 1  # WHY "+ 1"?
+            white_ft = tuple(1 if i == 0 else 0 for i in range(n_features))
 
-        self.s_features = {s: white_ft for s in range(self.nS)} # initialize all features to white squares
-        self.board = np.full([height, width], white_r, dtype=np.float32) # initialize all rewards to [white_r]
+            self.s_features = {s: white_ft for s in range(self.nS)} # initialize all features to white squares
+            self.board = np.full([height, width], white_r, dtype=np.float32) # initialize all rewards to [white_r]
 
-        #- Add additional features
-        for idx, ft in enumerate(features_sq, 1):
-            color = ft['color']
-            reward = ft['reward']
-            squares = ft['squares']
-            assert color != None
-            assert reward != None
+            #- Add additional features
+            for idx, ft in enumerate(features_sq, 1):
+                color = ft['color']
+                reward = ft['reward']
+                squares = ft['squares']
+                assert color != None
+                assert reward != None
 
-            if not squares:
-                n_color_sq = int(np.sqrt(width * height / n_features))
-                squares = list(zip(
-                    np.random.random_integers(0, width-1, n_color_sq), np.random.random_integers(0, height-1, n_color_sq)))
-            print('{} squares: {}'.format(color, squares))
+                # HOW IS OVERWRITING OF PREVIOUSLY ASSIGNED GRID POSITION FEATURES PREVENTED?
+                if not squares:
+                    n_color_sq = int(np.sqrt(width * height / n_features))
+                    squares = list(zip(
+                        np.random.random_integers(0, width-1, n_color_sq), np.random.random_integers(0, height-1, n_color_sq)))
+                print('{} squares: {}'.format(color, squares))
 
-            ft_vec = tuple(1 if i == idx else 0 for i in range(n_features))
-            for h, w in squares:
-                self.board[h, w] = reward
-                self.s_features[self.grid_to_state((h, w))] = ft_vec
+                ft_vec = tuple(1 if i == idx else 0 for i in range(n_features))
+                for h, w in squares:
+                    self.board[h, w] = reward
+                    self.s_features[self.grid_to_state((h, w))] = ft_vec
 
         #- Transition matrix:
         # stochastic transitions following random step over any action with probability [noise] and following
