@@ -14,7 +14,6 @@ class Cooridor(object):
         for i in range(cooridor_width):
             new_square = [int(cooridor_height / 2), i]
             squares.append(new_square)
-        print(squares)
 
         features_sq = [
             {
@@ -62,7 +61,7 @@ class Loop(object):
         features_sq = [
             {
                 'color': "grey",
-                'reward': 0,
+                'reward': -1,
                 'squares': squares
             },
             {
@@ -72,7 +71,8 @@ class Loop(object):
             }
         ]
 
-        self.env = Grid(grid_h, grid_w, gamma=0.9, white_r=-1, features_sq=features_sq, start_corner=False, end_pos=(vert_end, horz_end))
+        self.env = Grid(grid_h, grid_w, gamma=0.9, white_r=-2, features_sq=features_sq, start_corner=False,
+                        end_pos=(vert_end - 1, horz_end - 1))
         self.policy = self.init_policy()
         self.agent = Agent(self.policy, self.env.nS, self.env.nA)
         self.wrapper = Wrapper(self.env, self.agent, log=True)
