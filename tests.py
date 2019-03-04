@@ -6,6 +6,84 @@ from actions import ACTIONS
 from util_algo import *
 from SCOT import SCOT
 
+class Cooridor(object):
+    def __init__(self):
+        cooridor_width = 6
+        cooridor_height = 3
+        squares = []
+        for i in range(cooridor_width):
+            new_square = [int(cooridor_height / 2), i]
+            squares.append(new_square)
+        print(squares)
+
+        features_sq = [
+            {
+                'color': "grey",
+                'reward': 0,
+                'squares': squares
+            },
+            {
+                'color': "red",
+                'reward': 10,
+                'squares': [[int(cooridor_height / 2), cooridor_width - 1]]
+            }
+        ]
+        self.env  = Grid(cooridor_height, cooridor_width, gamma=0.9, white_r=-1, features_sq=features_sq,
+                start_corner=False, end_pos=(int(cooridor_height/2), cooridor_width - 1))
+        self.policy = self.init_policy()
+        self.agent = Agent(self.policy, self.env.nS, self.env.nA)
+        self.wrapper = Wrapper(self.env, self.agent, log=True)
+
+    def init_policy(self):
+        _, policy = value_iteration(self.env)
+        print('Policy from VI: {}'.format(policy))
+        return policy
+
+class Loop(object):
+    def __init__(self):
+        grid_w = 4
+        grid_h = 4
+        loop_w = 2
+        loop_h = 2
+        vert_start = int((grid_h - loop_h) / 2)
+        vert_end = int(((grid_h - loop_h) / 2) + loop_h)
+        horz_start = int((grid_w - loop_w) / 2)
+        horz_end = int(((grid_w - loop_w) / 2) + loop_w)
+
+        squares = []
+        for row in range(vert_start, vert_end + 1):
+            for col in (horz_start, horz_end):
+                new_square = [row, col]
+                squares.append(new_square)
+        for row in (vert_start, vert_end):
+            for col in range(horz_start, horz_end + 1):
+                new_square = [row, col]
+                squares.append(new_square)
+        features_sq = [
+            {
+                'color': "grey",
+                'reward': 0,
+                'squares': squares
+            },
+            {
+                'color': "red",
+                'reward': 10,
+                'squares': [[vert_end - 1, horz_end - 1]]
+            }
+        ]
+
+        self.env = Grid(grid_h, grid_w, gamma=0.9, white_r=-1, features_sq=features_sq, start_corner=False, end_pos=(vert_end, horz_end))
+        self.policy = self.init_policy()
+        self.agent = Agent(self.policy, self.env.nS, self.env.nA)
+        self.wrapper = Wrapper(self.env, self.agent, log=True)
+
+    def init_policy(self):
+        _, policy = value_iteration(self.env)
+        print('Policy from VI: {}'.format(policy))
+        return policy
+
+
+
 class BasicGrid(object):
     ''' Basic grid test environment. '''
     def __init__(self):

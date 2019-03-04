@@ -10,7 +10,7 @@ from tests import *
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-env', choices=['basic', 'multiple', 'niekum'], default='niekum')
+    parser.add_argument('-env', choices=['basic', 'multiple', 'niekum', 'cooridor', 'loop'], default='niekum')
     args = parser.parse_args()
 
     np.random.seed(2)
@@ -21,6 +21,10 @@ def main():
         test = MultipleFeatures()
     elif args.env == "niekum":
         test = BrownNiekum()
+    elif args.env == "cooridor":
+        test = Cooridor()
+    elif args.env == "loop":
+        test = Loop()
     else:
         test = BrownNiekum()
 
