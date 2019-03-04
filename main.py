@@ -19,6 +19,8 @@ def main():
         test = BasicGrid()
     elif args.env == 'multiple':
         test = MultipleFeatures()
+    elif args.env == "niekum":
+        test = BrownNiekum()
     else:
         test = BrownNiekum()
 
