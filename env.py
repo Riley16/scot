@@ -32,6 +32,7 @@ class Grid(object):
             weights: reward function weights
             start_corner: whether to start from fixed location (or sample from start_dist)
             start_dist: distribution of start states, if start_corner=False
+            end_pos: tuple representing terminal state location in grid word
         
         '''
 

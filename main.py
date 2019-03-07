@@ -10,14 +10,16 @@ from tests import *
 import time
 
 def main():
-    #np.random.seed(2)
-
     if args.env == 'basic':
         test = BasicGrid()
     elif args.env == 'multiple':
         test = MultipleFeatures()
     elif args.env == "niekum":
         test = BrownNiekum()
+    elif args.env == "cooridor":
+        test = Cooridor()
+    elif args.env == "loop":
+        test = Loop()
     else:
         test = BrownNiekum()
 
