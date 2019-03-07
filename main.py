@@ -7,13 +7,10 @@ from actions import ACTIONS
 from util_algo import *
 from SCOT import SCOT
 from tests import *
+import time
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-env', choices=['basic', 'multiple', 'niekum'], default='niekum')
-    args = parser.parse_args()
-
-    np.random.seed(2)
+    #np.random.seed(2)
 
     if args.env == 'basic':
         test = BasicGrid()
@@ -30,4 +27,10 @@ def main():
     SCOT(test.env, None, test.env.weights)
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-env', choices=['basic', 'multiple', 'niekum'], default='niekum')
+    args = parser.parse_args()
+    print()
+    t0 = time.time()
     main()
+    print(time.time() - t0)

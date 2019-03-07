@@ -24,7 +24,7 @@ def SCOT(mdp, s_start, w):
 
     # compute optimal policy pi_opt
     _, teacher_pol = value_iteration(mdp)  # using variation of VI code from HW1
-    print("Teacher policy: {}".format(teacher_pol))
+    #print("Teacher policy: {}".format(teacher_pol))
     # convert teacher policy to stochastic policy
     teacher_pol = det2stoch_policy(teacher_pol, mdp.nS, mdp.nA)
 
@@ -101,7 +101,9 @@ def SCOT(mdp, s_start, w):
         D.append(t_greedy)
         C = C.union(BEC_list[t_greedy_index])
 
-    print(D)
+    print("trajectories", D)
+    lens = [len(s) for s in D]
+    print(len(D), lens)
     return D
 
 
