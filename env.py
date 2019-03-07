@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Any, Union
 from actions import ACTIONS
 
 # Grid environment
@@ -11,7 +11,7 @@ class Grid(object):
     '''
 
     def __init__(self, height:int, width:int, gamma:float, white_r:float=None,
-                features_sq:List[Dict]=None, gen_features:List[List]=None, n_features:int=None,
+                features_sq:List[Dict]=None, gen_features:Union[List[List], Any]=None, n_features:int=None,
                 noise:float=0.0, weights=None,
                 start_corner=True, start_dist=None, end_pos:Tuple=None):
         '''
@@ -42,24 +42,28 @@ class Grid(object):
         self.nS = width*height
         self.actions_to_grid = {a: g for a, g in enumerate(ACTIONS)}
         self.grid_to_actions = {g: a for a, g in enumerate(ACTIONS)}
+        if noise is not None:
+            self.noise = noise
+        else:
+            self.noise = 0
 
         #- Implement linear reward function weights in environment (associated with agent)
 
         if weights is None:
             if white_r is not None and features_sq is not None:
                 self.weights = np.array([white_r] + [ft['reward'] for ft in features_sq], dtype=np.float32)
-            else:
+                self.n_features = len(features_sq)
+        else:
+            if weights == "random":
                 # random initialization of reward weights in [-1,0]^n_features
-                # MAY RUN INTO INITIALIZATIONS WITH INDEFINITE EPISODE LENGTH FOR OPTIMAL POLICIES
-                # ONE SOLUTION IS TO SET THE REWARD WEIGHTS AS NEGATIVE AND SET THE STATES FEATURES FOR THE TERMINAL
-                # STATES TO ENSURE MAXIMAL REWARD AT THE TERMINAL STATES AND THAT ONLY BY REACHING THE TERMINAL STATES
-                # CAN NEGATIVE REWARD STOP BEING ACCUMULATED, MAY NOT GUARANTEE TERMINATING OPTIMAL EPISODES
                 self.n_features = n_features
                 self.weights = -np.random.rand(self.n_features)
+                print("random reward weights:")
                 print(self.weights)
-        else:
-            assert isinstance(weights, np.ndarray)
-            self.weights = weights
+            else:
+                assert isinstance(weights, np.ndarray)
+                self.weights = weights
+                self.n_features = len(weights)
 
         #- Initialize features and board
         if gen_features is not None:
@@ -69,8 +73,15 @@ class Grid(object):
             if isinstance(gen_features[0][0], List) or isinstance(gen_features[0][0], Tuple):
                 self.s_features = [np.array(gen_features[h][w])
                                    for h in range(len(gen_features)) for w in range(len(gen_features[0]))]
-                print(self.s_features)
             # feature initialization if features are specified directly by state
+            elif gen_features == 'random':
+                if not isinstance(n_features, int):
+                    print("Must specify integer number of state features for random initialization!")
+                self.s_features = [np.random.random_integers(0, 1, n_features) for _ in range(self.nS)]
+                #print(self.s_features)
+
+                self.board = np.array([[self.reward(self.grid_to_state((h, w)))
+                                        for w in range(width)] for h in range(height)], dtype=np.float32)
             else:
                 self.s_features = [np.array(gen_features[s]) for s in range(self.nS)]
             self.board = np.array([[self.reward(self.grid_to_state((h, w)))
@@ -90,12 +101,12 @@ class Grid(object):
                 assert color != None
                 assert reward != None
 
-                # HOW IS OVERWRITING OF PREVIOUSLY ASSIGNED GRID POSITION FEATURES PREVENTED?
+                # HOW TO PREVENT OVERWRITING OF PREVIOUSLY ASSIGNED GRID POSITION FEATURES?
                 if not squares:
                     n_color_sq = int(np.sqrt(width * height / n_features))
                     squares = list(zip(
                         np.random.random_integers(0, width-1, n_color_sq), np.random.random_integers(0, height-1, n_color_sq)))
-                print('{} squares: {}'.format(color, squares))
+                #print('{} squares: {}'.format(color, squares))
 
                 ft_vec = tuple(1 if i == idx else 0 for i in range(n_features))
                 for h, w in squares:
