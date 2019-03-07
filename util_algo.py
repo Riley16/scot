@@ -76,10 +76,12 @@ def monte_carlo(wrapper, T:int=0, n:int=1, eps:float=1e-2):
     iters = 0                           # track iterations
 
     if T == 0: T = nS
+    if T == -1: T = float("inf")
 
     # iterate until max(abs(V_pi_old - V_new)) < eps
     print('Running {}-th visit Monte Carlo policy evaluation...'.format(n))
     while True:
+        nth_visit = np.zeros(nS)
         # sample an episode
         _, traj = wrapper.eval_episodes(1)      # each step is (s, a, r, s')
 
@@ -93,7 +95,8 @@ def monte_carlo(wrapper, T:int=0, n:int=1, eps:float=1e-2):
         V_pi_new = V_pi_old
         for t, g in zip(traj, G_t):
             s = t[0]
-            if N[s] < n:
+            if nth_visit[s] < n:
+                nth_visit[s] += 1
                 N[s] += 1
                 G[s] += g
                 V_pi_new[s] = G[s] / N[s]
