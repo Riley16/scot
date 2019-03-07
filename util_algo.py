@@ -50,6 +50,74 @@ def value_iteration(mdp, tol=1e-3):
     print('VI iterations to convergence: %d' % k)
     return value_function, policy
 
+def monte_carlo(mdp, agent, T:int, n:int=1, eps:float=1e-2):
+    """
+    Learn value function of a policy by using n-th visit Monte Carlo sampling.
+
+    Parameters:
+    ----------
+    P, nS, nA, gamma:
+        define at beginning of file
+    agent: agent object (see agent.py)
+    T: maximum length of each episode
+    n: n-th visit Monte Carlo, -1 for every-visit
+
+    Returns:
+    ----------
+    value_function: np.ndarray[nS]
+    """
+    nS = mdp.nS
+    nA = mdp.nS
+    gamma = mdp.gamma
+    
+    N = np.zeros(nS)                    # track visits to each state
+    G = np.zeros(nS, dtype=np.float32)  # track rewards for each state
+    V_pi_old = np.zeros(nS)             # initialize value function
+    iters = 0                           # track iterations
+
+    assert T > 0                        # must be non-zero episode length
+
+    # iterate until max(abs(V_pi_old - V_new)) < eps
+    print('Running {}-th visit Monte Carlo policy evaluation...'.format(n))
+    while True:
+        # sample an episode
+        traj = []
+        mdp.reset()         # reset mdp for each episode
+        s_i = mdp.start     # set start state for each episode
+        for i in range(T):
+            a_i = agent.get_action(s_i)
+            s_j, r_i, is_done = mdp.step(s_i, a_i)
+            traj.append((s_i, a_i, r_i))
+            if is_done:
+                break
+            s_i = s_j
+
+        # generate accumulated rewards at each time step
+        G_t = np.zeros(nS)
+        for i in range(G_t.shape[0]):
+            for j, t in enumerate(i, traj):
+                G_t[i] += (gamma ** j) * t[-1]
+
+        # update N, G, and V_pi for each state
+        V_pi_new = V_pi_old
+        for t, g in zip(traj, G_t):
+            s = t[0]
+            if N[s] < n:
+                N[s] += 1
+                G[s] += g
+                V_pi_new[s] = G[s] / N[s]
+
+        # check for convergence
+        if np.amax(np.abs(V_pi_new - V_pi_old)) < eps:
+            break
+
+        # prepare next rollout
+        iters += 1
+        V_pi_old = V_pi_new
+
+    print('Monte Carlo iterations to converge: {}'.format(iters+1))
+
+    return V_pi_new
 
 # compute expected  linear feature counts mu[s][a] under optimal policy
 # USE DETERMINISTIC POLICIES (AS INPUTS) FOR NOW

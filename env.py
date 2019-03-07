@@ -149,6 +149,7 @@ class Grid(object):
         self.log.append(self.state_to_grid(successor))
         self.r = self.gamma * self.r + r
         self.t += 1
+        self.agent = successor
         self.traj.append((s, a, r, successor))
 
         return successor, r, self.is_terminal(successor)
