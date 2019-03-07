@@ -8,9 +8,26 @@ from util_algo import *
 from SCOT import SCOT
 from tests import *
 
+def test_mc(wrapper):
+    ''' Evaluate Monte Carlo algorithm. '''
+
+    # generate optimal policy / value function from value iteration
+    value_function_vi, policy = value_iteration(wrapper.env)
+    
+    # evaluate optimal policy with monte carlo
+    value_function_mc = monte_carlo(wrapper, n=1, eps=1e-2)
+
+    # compare value functions
+    print('Optimal policy: {}'.format(policy))
+    print('Value function from VI: {}'.format(value_function_vi))
+    print('Value function from MC: {}'.format(value_function_mc))
+
+    return value_function_vi, value_function_mc
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-env', choices=['basic', 'multiple', 'niekum', 'cooridor', 'loop'], default='niekum')
+    parser.add_argument('-mc', action='store_true')
     args = parser.parse_args()
 
     np.random.seed(2)
@@ -31,7 +48,10 @@ def main():
     print("{} grid environment:".format(test.__class__.__name__))
     test.env.render()
 
-    SCOT(test.env, None, test.env.weights)
+    if args.mc:
+        test_mc(test.wrapper)
+    else:
+        SCOT(test.env, None, test.env.weights)
 
 if __name__ == "__main__":
     main()

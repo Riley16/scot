@@ -50,7 +50,7 @@ def value_iteration(mdp, tol=1e-3):
     print('VI iterations to convergence: %d' % k)
     return value_function, policy
 
-def monte_carlo(mdp, agent, T:int, n:int=1, eps:float=1e-2):
+def monte_carlo(wrapper, T:int=0, n:int=1, eps:float=1e-2):
     """
     Learn value function of a policy by using n-th visit Monte Carlo sampling.
 
@@ -58,7 +58,7 @@ def monte_carlo(mdp, agent, T:int, n:int=1, eps:float=1e-2):
     ----------
     P, nS, nA, gamma:
         define at beginning of file
-    agent: agent object (see agent.py)
+    wrapper: wrapper object (see wrapper.py)
     T: maximum length of each episode
     n: n-th visit Monte Carlo, -1 for every-visit
 
@@ -66,37 +66,28 @@ def monte_carlo(mdp, agent, T:int, n:int=1, eps:float=1e-2):
     ----------
     value_function: np.ndarray[nS]
     """
-    nS = mdp.nS
-    nA = mdp.nS
-    gamma = mdp.gamma
-    
+    nS = wrapper.env.nS
+    nA = wrapper.env.nS
+    gamma = wrapper.env.gamma
+
     N = np.zeros(nS)                    # track visits to each state
     G = np.zeros(nS, dtype=np.float32)  # track rewards for each state
     V_pi_old = np.zeros(nS)             # initialize value function
     iters = 0                           # track iterations
 
-    assert T > 0                        # must be non-zero episode length
+    if T == 0: T = nS
 
     # iterate until max(abs(V_pi_old - V_new)) < eps
     print('Running {}-th visit Monte Carlo policy evaluation...'.format(n))
     while True:
         # sample an episode
-        traj = []
-        mdp.reset()         # reset mdp for each episode
-        s_i = mdp.start     # set start state for each episode
-        for i in range(T):
-            a_i = agent.get_action(s_i)
-            s_j, r_i, is_done = mdp.step(s_i, a_i)
-            traj.append((s_i, a_i, r_i))
-            if is_done:
-                break
-            s_i = s_j
+        _, traj = wrapper.eval_episodes(1)      # each step is (s, a, r, s')
 
         # generate accumulated rewards at each time step
-        G_t = np.zeros(nS)
+        G_t = np.zeros(len(traj))
         for i in range(G_t.shape[0]):
-            for j, t in enumerate(i, traj):
-                G_t[i] += (gamma ** j) * t[-1]
+            for j, t in enumerate(traj[i:]):
+                G_t[i] += (gamma ** j) * t[2]
 
         # update N, G, and V_pi for each state
         V_pi_new = V_pi_old
