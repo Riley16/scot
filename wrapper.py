@@ -20,12 +20,12 @@ class Wrapper(object):
         self.agent = agent
         self.log = log
 
-    def eval_episodes(self, n_episodes, s_start=None):
+    def eval_episodes(self, n_episodes, s_start=None, horizon=None):
         ''' Evaluate episodes with policy '''
         total_r = []
         trajectories = []
         for i in range(n_episodes):
-            R, traj = self._eval_episode(s_start)
+            R, traj = self._eval_episode(s_start, horizon=horizon)
 
             total_r.append(R)
             trajectories.append(traj)
@@ -35,14 +35,24 @@ class Wrapper(object):
         return total_r, trajectories
 
     #- internal functions -#
-    def _eval_episode(self, s_start=None):
+    def _eval_episode(self, s_start=None, horizon=None):
         ''' Evaluate one episode between env and agent '''
         done = False
         total_r = 0
         s = self.env.reset(s_start=s_start)
-        while not done:
-            a = self.agent.get_action(s)
-            s, r, done = self.env.step(s, a)
-            total_r += r
+        # finite horizon case
+        if horizon is not None:
+            t = 0
+            while not done and t < horizon:
+                t += 1
+                a = self.agent.get_action(s)
+                s, r, done = self.env.step(s, a)
+                total_r += r
+        # infinite horizon case
+        else:
+            while not done:
+                a = self.agent.get_action(s)
+                s, r, done = self.env.step(s, a)
+                total_r += r
         return total_r, self.env.traj
 

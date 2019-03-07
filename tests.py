@@ -64,9 +64,9 @@ class BrownNiekum(object):
       -2          -1
       -1          -1
       -1          -2
-    Does not handle cases of
-      0           0  (may not be necessary)
-      1           1  (may not be necessary)
+    Does not terminate for cases of
+      0           0  (no motivation to terminate)
+      1           1  (no motivation to terminate)
     '''
     def __init__(self):
         features = [
@@ -77,13 +77,28 @@ class BrownNiekum(object):
             }]
         # self.env = Grid(2, 3, 0.9, white_r=-1, features_sq=features, noise=0.0, start_corner=False)
 
-        # tests of arbitrary feature inputs using basic Brown and Niekum environment
+        # sanity checks for various grid environment setup methods with basic Brown and Niekum environment
+
+        # tests of explicit arbitrary feature inputs on a state-by-state basis
         # self.env = Grid(2, 3, 0.9, gen_features=[[1, 0],[1, 0],[1, 0],[1, 0],[0, 1],[1, 0]], weights=np.array([-1, -10]),
         #                 noise=0.0, start_corner=False)
+
+        # tests of explicit arbitrary feature inputs on a row-column coordinate basis
         # self.env = Grid(2, 3, 0.9, gen_features=[[[1, 0],[1, 0],[1, 0]],[[1, 0],[0, 1],[1, 0]]], weights=np.array([-1, -10]),
         #                 noise=0.0, start_corner=False)
-        self.env = Grid(2, 3, 0.9, gen_features=[[[1, 0],[1, 0],[1, 0]],[[1, 0],[0, 1],[0, 0]]], n_features=2,
+
+        # random reward weight assignment:
+        # self.env = Grid(2, 3, 0.9, gen_features=[[[1, 0],[1, 0],[1, 0]],[[1, 0],[0, 1],[0, 0]]], n_features=2, weights="random",
+        #                 noise=0.0, start_corner=False)
+
+        # random feature assignments for known reward weights
+        # self.env = Grid(2, 3, 0.9, gen_features="random", n_features=4, weights=np.array([-1, -10, 0, 0]),
+        #                 noise=0.0, start_corner=False)
+
+        # random feature assignments for ten features, random reward weights
+        self.env = Grid(2, 3, 0.9, gen_features="random", n_features=10, weights="random",
                         noise=0.0, start_corner=False)
+
         self.policy = self.init_policy()
         self.agent = Agent(self.policy, self.env.nS, self.env.nA)
         self.wrapper = Wrapper(self.env, self.agent, log=True)
