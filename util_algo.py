@@ -40,7 +40,9 @@ def value_iteration(mdp, tol=1e-3):
 
         # NEED TO ACCOUNT FOR TERMINAL STATES? NIEKUM IS INCLUDING TERMINAL AND INITIAL REWARDS
         for s in range(nS):
-            policy[s] = max([(mdp.reward(s) + gamma * sum([mdp.P[s, a, succ] * value_function_old[succ] * float(not mdp.is_terminal(s))
+            # print(mdp.reward(s))
+
+            policy[s] = max([(mdp.reward(s) + gamma * sum([mdp.P[s, a, succ] * value_function_old[succ] # * float(not mdp.is_terminal(s))
                                    for succ in range(nS)]), a) for a in range(nA)])[1]
 
             value_function[s] = mdp.reward(s) + gamma * sum([mdp.P[s, int(policy[s]), succ] * value_function_old[succ] * float(not mdp.is_terminal(s))

@@ -7,6 +7,7 @@ from actions import ACTIONS
 from util_algo import *
 from SCOT import SCOT
 from tests import *
+import time
 
 def test_mc(wrapper):
     ''' Evaluate Monte Carlo algorithm. '''
@@ -24,14 +25,7 @@ def test_mc(wrapper):
 
     return value_function_vi, value_function_mc
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-env', choices=['basic', 'multiple', 'niekum', 'cooridor', 'loop'], default='niekum')
-    parser.add_argument('-mc', action='store_true')
-    args = parser.parse_args()
-
-    np.random.seed(2)
-
+def main(args):
     if args.env == 'basic':
         test = BasicGrid()
     elif args.env == 'multiple':
@@ -54,4 +48,12 @@ def main():
         SCOT(test.env, None, test.env.weights)
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-env', choices=['basic', 'multiple', 'niekum'], default='niekum')
+    parser.add_argument('-mc', action='store_true')
+    args = parser.parse_args()
+
+    start = time.time()
+    main(args)
+    end = time.time()
+    print('Total run time: {}'.format(end - start))

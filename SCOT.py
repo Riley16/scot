@@ -24,7 +24,7 @@ def SCOT(mdp, s_start, w):
 
     # compute optimal policy pi_opt
     _, teacher_pol = value_iteration(mdp)  # using variation of VI code from HW1
-    print("Teacher policy: {}".format(teacher_pol))
+    #print("Teacher policy: {}".format(teacher_pol))
     # convert teacher policy to stochastic policy
     teacher_pol = det2stoch_policy(teacher_pol, mdp.nS, mdp.nA)
 
@@ -67,10 +67,15 @@ def SCOT(mdp, s_start, w):
 
     demo_trajs = []
 
+    # limit trajectory length to guarantee termination of algorithm
+    # may want to increase max trajectory length for stochastic environments
+    # may want to set trajectory limit to number of iterations required in VI/feature count computations
+    H = mdp.nS  # /(1 + 1e-6 - mdp.noise)
+
     # FOR NOW USE ALL STATES,
     # LATER LIMIT TO JUST STATES WITH NON-ZERO START DISTRIBUTION PROBABILITIES
     for s in range(mdp.nS):
-        demo_trajs += wrapper.eval_episodes(m, s)[1]
+        demo_trajs += wrapper.eval_episodes(m, s, horizon=H)[1]
 
     print("demo_trajs", demo_trajs)
     # (2) greedy set cover algorithm to compute maximally informative trajectories
@@ -98,7 +103,9 @@ def SCOT(mdp, s_start, w):
         D.append(t_greedy)
         C = C.union(BEC_list[t_greedy_index])
 
-    print("optimal demonstrations", D)
+    print("trajectories", D)
+    lens = [len(s) for s in D]
+    print(len(D), lens)
     return D
 
 
