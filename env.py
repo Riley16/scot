@@ -106,7 +106,7 @@ class Grid(object):
                     n_color_sq = int(np.sqrt(width * height / n_features))
                     squares = list(zip(
                         np.random.random_integers(0, width-1, n_color_sq), np.random.random_integers(0, height-1, n_color_sq)))
-                #print('{} squares: {}'.format(color, squares))
+                print('{} squares: {}'.format(color, squares))
 
                 ft_vec = tuple(1 if i == idx else 0 for i in range(n_features))
                 for h, w in squares:

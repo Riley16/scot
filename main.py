@@ -20,6 +20,8 @@ def main():
         test = Cooridor()
     elif args.env == "loop":
         test = Loop()
+    elif args.env == "paper_test":
+        test = MultipleFeatures_Test()
     else:
         test = BrownNiekum()
 
@@ -30,7 +32,7 @@ def main():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-env', choices=['basic', 'multiple', 'niekum'], default='niekum')
+    parser.add_argument('-env', choices=['basic', 'multiple', 'niekum', 'paper_test'], default='niekum')
     args = parser.parse_args()
     print()
     t0 = time.time()
