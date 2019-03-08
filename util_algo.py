@@ -85,7 +85,8 @@ def monte_carlo(wrapper, T:int=0, n:int=1, eps:float=1e-2):
     while True:
         nth_visit = np.zeros(nS)
         # sample an episode
-        _, traj = wrapper.eval_episodes(1)      # each step is (s, a, r, s')
+        _, traj = wrapper.eval_episodes(1, horizon=T)      # each step is (s, a, r, s')
+        traj = traj[0]
 
         # generate accumulated rewards at each time step
         G_t = np.zeros(len(traj))
