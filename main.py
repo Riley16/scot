@@ -9,7 +9,11 @@ from SCOT import SCOT
 from tests import *
 import time
 
-def main():
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-env', choices=['basic', 'multiple', 'niekum', 'paper_test'], default='niekum')
+    args = parser.parse_args()
+
     if args.env == 'basic':
         test = BasicGrid()
     elif args.env == 'multiple':
@@ -24,17 +28,44 @@ def main():
         test = MultipleFeatures_Test()
     else:
         test = BrownNiekum()
+    return test
 
-    print("{} grid environment:".format(test.__class__.__name__))
-    test.env.render()
 
-    SCOT(test.env, None, test.env.weights)
+def main():
+    #parse_arguments()
+
+    #print("{} grid environment:".format(test.__class__.__name__))
+
+    total_sum = []
+    num_trajs = []
+    all_lens = []
+    times = []
+    numTests = 2
+    for i in range(numTests):
+        test = BrownNiekum()
+        test.env.render()
+
+        print("\n ITER", i)
+        t0 = time.time()
+        D, lens = SCOT(test.env, None, test.env.weights)
+        num_trajs.append(len(D))
+        total_sum.append(sum(lens))
+        all_lens += lens
+        print(len(D), lens)
+        trial_time = time.time() - t0
+        times.append(trial_time)
+
+    avg_num_trajs = np.mean(num_trajs)
+    avg_traj_lens = sum(total_sum) / sum(num_trajs)
+    var_num_trajs = np.var(num_trajs)
+    var_traj_lens = np.var(all_lens)
+    avg_time = np.mean(times)
+    var_time = np.var(times)
+
+    print("avg_num_trajs, avg_traj_lens, var_num_trajs, var_traj_lens \n",
+          avg_num_trajs, avg_traj_lens, var_num_trajs, var_traj_lens)
+    print("avg_time, var_time\n", avg_time, var_time)
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-env', choices=['basic', 'multiple', 'niekum', 'paper_test'], default='niekum')
-    args = parser.parse_args()
-    print()
-    t0 = time.time()
     main()
-    print(time.time() - t0)

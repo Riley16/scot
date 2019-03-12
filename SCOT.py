@@ -56,7 +56,7 @@ def SCOT(mdp, s_start, w):
     # remove trivial, duplicate, and redundant half-space constraints
     BEC = refineBEC(w, BEC)
 
-    print("BEC", BEC)
+    #print("BEC", BEC)
     # (1) compute candidate demonstration trajectories
 
     # STATISTICAL VALUES FOR NUMBER OF TRAJECTORIES WITH STOCHASTIC TRANSITIONS?
@@ -77,7 +77,7 @@ def SCOT(mdp, s_start, w):
     for s in range(mdp.nS):
         demo_trajs += wrapper.eval_episodes(m, s, horizon=H)[1]
 
-    print("demo_trajs", demo_trajs)
+    #print("demo_trajs", demo_trajs)
     # (2) greedy set cover algorithm to compute maximally informative trajectories
     U = set()
     for i in range(BEC.shape[0]):
@@ -103,10 +103,10 @@ def SCOT(mdp, s_start, w):
         D.append(t_greedy)
         C = C.union(BEC_list[t_greedy_index])
 
-    print("trajectories", D)
+    #print("trajectories", D)
     lens = [len(s) for s in D]
-    print(len(D), lens)
-    return D
+    #print(len(D), lens)
+    return D, lens
 
 
 def compute_traj_BEC(traj, mu, mu_sa, mdp, w):
