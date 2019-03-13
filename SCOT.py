@@ -36,7 +36,7 @@ def SCOT(mdp, s_start, w):
     BEC = np.empty((mdp.nS*mdp.nA, w.shape[0]))
 
     # get features for all MDP states
-    phi_s = np.array([list(mdp.s_features[s]) for s in range(mdp.nS)]).astype(float)
+    # phi_s = np.array([list(mdp.s_features[s]) for s in range(mdp.nS)]).astype(float)
 
     # NOT NEEDED CURRENTLY
     # T_pi = mdp.get_pol_trans(teacher_pol)
@@ -44,7 +44,7 @@ def SCOT(mdp, s_start, w):
     # compute BEC for teacher policy
     for a in range(mdp.nA):
         BEC[a*mdp.nS:(a+1)*mdp.nS] = mu - mu_sa[:, a]
-        # FOR ANALYTICAL COMPUTATION BY NG REFERENCED IN BROWN AND NIEKUM (2019), CURRENTLY NOT WORKING, PROBABLY NOT NEEDED
+        # FOR ANALYTICAL COMPUTATION BY NG REFERENCED IN BROWN AND NIEKUM (2019), CURRENTLY NOT WORKING, NOT NEEDED
         # pol_a = det2stoch_policy(np.full(mdp.nS, a), mdp.nS, mdp.nA)
         # T_a = mdp.get_pol_trans(pol_a)
         # # BEC[a*mdp.nS:(a+1)*mdp.nS] = (T_pi - T_a)@np.linalg.inv(np.eye(mdp.nS) - mdp.gamma*T_pi)@phi_s
@@ -115,7 +115,6 @@ def compute_traj_BEC(traj, mu, mu_sa, mdp, w):
     for i in range(len(traj)):
         (s, a, r, s_new) = traj[i]
         for b in range(mdp.nA):
-            test = mu[s] - mu_sa[s, b]
             BEC_traj_np[i * mdp.nA + b] = mu[s] - mu_sa[s, b]
 
     # normalize and remove trival and redundant constraints from BEC of trajectory
@@ -149,7 +148,9 @@ def refineBEC(w, BEC):
     BEC = np.delete(BEC, list(triv_i), 0)
 
     # remove redundant half-space constraints with linear programming
-    bounds = tuple([(None, None) for _ in range(w.shape[0])])
+    # bounds = tuple([(None, None) for _ in range(w.shape[0])])
+    # TRY ADDING VARIABLE BOUNDS WHICH DO NOT AFFECT THE SOLUTIONS
+    bounds = tuple([(-1, 1) for _ in range(w.shape[0])])
     for i in range(BEC.shape[0] - 1, -1, -1):
         c = -BEC[i]
         A = np.delete(BEC, i, 0)
