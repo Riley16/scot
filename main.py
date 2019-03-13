@@ -28,7 +28,12 @@ def main():
     print("{} grid environment:".format(test.__class__.__name__))
     test.env.render()
 
-    SCOT(test.env, None, test.env.weights)
+    np.random.seed(2)
+    trajs = SCOT(test.env, None, test.env.weights)
+    r_weights = maxLikelihoodIRL(trajs, test.env, step_size=0.001, eps=1.0e-03)
+    print(test.env.weights)
+    print(r_weights)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

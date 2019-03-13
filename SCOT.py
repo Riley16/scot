@@ -3,7 +3,7 @@ from util_algo import *
 from scipy.optimize import linprog
 from agent import *
 from wrapper import *
-
+import time
 
 def SCOT(mdp, s_start, w):
     """
@@ -22,6 +22,8 @@ def SCOT(mdp, s_start, w):
             represented as lists of (s, a, r, s') experience tuples
     """
 
+    t = time.time()
+
     # compute optimal policy pi_opt
     _, teacher_pol = value_iteration(mdp)  # using variation of VI code from HW1
     #print("Teacher policy: {}".format(teacher_pol))
@@ -30,6 +32,10 @@ def SCOT(mdp, s_start, w):
 
     # compute expected feature counts mu[s][a] under optimal policy
     mu, mu_sa = get_feature_counts(mdp, teacher_pol)
+
+    print("VI, feature counts")
+    print(time.time() - t)
+    t = time.time()
 
     # compute BEC of teacher as list of vectors defining halfspaces of linear reward
     # function parameters implied by teacher's policy
@@ -56,6 +62,11 @@ def SCOT(mdp, s_start, w):
     # remove trivial, duplicate, and redundant half-space constraints
     BEC = refineBEC(w, BEC)
 
+    print("compute and refine teacher BEC")
+    print(time.time() - t)
+    t = time.time()
+
+
     print("BEC", BEC)
     # (1) compute candidate demonstration trajectories
 
@@ -77,7 +88,11 @@ def SCOT(mdp, s_start, w):
     for s in range(mdp.nS):
         demo_trajs += wrapper.eval_episodes(m, s, horizon=H)[1]
 
-    print("demo_trajs", demo_trajs)
+    print("get demonstration trajectories")
+    print(time.time() - t)
+    t = time.time()
+
+    # print("demo_trajs", demo_trajs)
     # (2) greedy set cover algorithm to compute maximally informative trajectories
     U = set()
     for i in range(BEC.shape[0]):
@@ -90,6 +105,14 @@ def SCOT(mdp, s_start, w):
         the set cover problem is to identify the smallest sub-collection of S whose union equals the universe.
         For example, consider the universe U={1,2,3,4,5} and the collection of sets S={{1,2,3},{2,4},{3,4},{4,5}}}
         """
+    # SHOULD BE ABLE TO ELIMINATE ONE OF THE SET SUBTRACTIONS U - C
+    # MIGHT BE THAT CANDIDATE TRAJECTORY SET DOESN'T COVER TEACHER BEC
+    # CHECK THE CODE THAT i ELIMINATED IN MY LAST COMMIT, MIGHT HAVE BEEN A MISTAKE
+    # SHOULD ALWAYS TERMINATE... AND SHOULDN'T ITERATE FOR MORE THAN THE NUMBER OF DEMONSTRATION TRAJECTORIES
+    # SHOULDN'T BE RANDOM
+
+    print("number of demonstration trajectories:")
+    print(len(demo_trajs))
     while len(U - C) > 0:
         t_list = []  # collects the cardinality of the intersection between BEC(traj|pi*) and U \ C
         BEC_list = []
@@ -102,6 +125,10 @@ def SCOT(mdp, s_start, w):
         t_greedy = demo_trajs[t_greedy_index]  # argmax over t_list to find greedy traj
         D.append(t_greedy)
         C = C.union(BEC_list[t_greedy_index])
+
+        print("greedy set cover iteration")
+        print(time.time() - t)
+        t = time.time()
 
     print("trajectories", D)
     lens = [len(s) for s in D]
@@ -124,6 +151,7 @@ def compute_traj_BEC(traj, mu, mu_sa, mdp, w):
     BEC_traj = set()
     for i in range(BEC_traj_np.shape[0]):
         BEC_traj.add(tuple(BEC_traj_np[i].tolist()))
+
     return BEC_traj
 
 
