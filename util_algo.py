@@ -77,7 +77,6 @@ def monte_carlo(wrapper, T:int=0, n:int=1, eps:float=1e-2):
     iters = 0                           # track iterations
 
     if T == 0: T = nS
-    elif T == -1: T = float("inf")
 
     if n == -1: n = float('inf')
 
@@ -94,10 +93,9 @@ def monte_carlo(wrapper, T:int=0, n:int=1, eps:float=1e-2):
         start_r = wrapper.env.reward(start_state)
 
         # accomodate for this by shifting trajectory rewards
-
         for i in range(1, len(traj)):
-            _, _, r, s_ = traj[i-1]
-            s, _, _, _ = traj[i]
+            _, _, r, _ = traj[i-1]
+            s, _, _, s_ = traj[i]
             traj[i] = (s, None, r, s_)
         traj[0] = (start_state, None, start_r, traj[0][-1])
         last_state = traj[-1][-1]

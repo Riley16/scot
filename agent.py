@@ -23,8 +23,5 @@ class Agent(object):
         self.policy = policy
 
     def get_action(self, s):
-        if len(self.policy.shape) == 1:
-            return self.policy[s]
-        else:
-            return np.cumsum(self.policy[s]).argmax()
+        return np.cumsum(self.policy[s] > np.random.random()).argmax()
 

@@ -189,4 +189,5 @@ class BrownNiekum(object):
     def init_policy(self):
         _, policy = value_iteration(self.env)
         print('Policy from VI: {}'.format(policy))
+        policy = det2stoch_policy(policy, self.env.nS, self.env.nA)
         return policy
