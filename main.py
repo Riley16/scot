@@ -16,7 +16,7 @@ def test_mc(wrapper):
     value_function_vi, policy = value_iteration(wrapper.env)
     
     # evaluate optimal policy with monte carlo
-    value_function_mc = monte_carlo(wrapper, n=1, eps=1e-2)
+    value_function_mc = monte_carlo(wrapper, n=-1, eps=1e-5)
 
     # compare value functions
     print('Optimal policy: {}'.format(policy))

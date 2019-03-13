@@ -90,10 +90,15 @@ class BasicGrid(object):
         features = [
             {
                 'color': 'gray',
-                'reward': 10.0,
-                'squares': None
+                'reward': -10.0,
+                'squares': [[1, 1], [1, 2], [2, 1], [2, 2]]
+            },
+            {
+                'color':'rainbow',
+                'reward': 100.0,
+                'squares': [[3, 3]]
             }]
-        self.env = Grid(4, 4, 0.75, white_r=1.0, features_sq=features, start_corner=True, noise=0.0, weights=None)
+        self.env = Grid(4, 4, 0.75, white_r=-1.0, features_sq=features, start_corner=True, noise=0.0, weights=None)
         self.policy = self.init_policy()
         self.agent = Agent(self.policy, self.env.nS, self.env.nA)
         self.wrapper = Wrapper(self.env, self.agent, log=True)
@@ -153,7 +158,7 @@ class BrownNiekum(object):
                 'reward': -10.0,
                 'squares': [[1, 1]]
             }]
-        # self.env = Grid(2, 3, 0.9, white_r=-1, features_sq=features, noise=0.0, start_corner=False)
+        self.env = Grid(2, 3, 0.9, white_r=-1, features_sq=features, noise=0.0, start_corner=False)
 
         # sanity checks for various grid environment setup methods with basic Brown and Niekum environment
 
@@ -174,8 +179,8 @@ class BrownNiekum(object):
         #                 noise=0.0, start_corner=False)
 
         # random feature assignments for ten features, random reward weights
-        self.env = Grid(2, 2, 0.9, gen_features="random", n_features=15, weights="random",
-                        noise=0.0, start_corner=False)
+        # self.env = Grid(2, 2, 0.9, gen_features="random", n_features=15, weights="random",
+                        # noise=0.0, start_corner=False)
 
         self.policy = self.init_policy()
         self.agent = Agent(self.policy, self.env.nS, self.env.nA)

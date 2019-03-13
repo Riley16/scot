@@ -69,7 +69,6 @@ def monte_carlo(wrapper, T:int=0, n:int=1, eps:float=1e-2):
     value_function: np.ndarray[nS]
     """
     nS = wrapper.env.nS
-    nA = wrapper.env.nS
     gamma = wrapper.env.gamma
 
     N = np.zeros(nS)                    # track visits to each state
@@ -78,15 +77,31 @@ def monte_carlo(wrapper, T:int=0, n:int=1, eps:float=1e-2):
     iters = 0                           # track iterations
 
     if T == 0: T = nS
-    if T == -1: T = float("inf")
+    elif T == -1: T = float("inf")
+
+    if n == -1: n = float('inf')
 
     # iterate until max(abs(V_pi_old - V_new)) < eps
     print('Running {}-th visit Monte Carlo policy evaluation...'.format(n))
     while True:
         nth_visit = np.zeros(nS)
         # sample an episode
-        _, traj = wrapper.eval_episodes(1, horizon=T)      # each step is (s, a, r, s')
-        traj = traj[0]
+        _, traj = wrapper.eval_episodes(1, s_start=None, horizon=T**2)
+        traj = traj[0] # each step is (s, a, r, s')
+
+        # add initial rewards to trajectory
+        start_state = wrapper.env.start
+        start_r = wrapper.env.reward(start_state)
+
+        # accomodate for this by shifting trajectory rewards
+
+        for i in range(1, len(traj)):
+            _, _, r, s_ = traj[i-1]
+            s, _, _, _ = traj[i]
+            traj[i] = (s, None, r, s_)
+        traj[0] = (start_state, None, start_r, traj[0][-1])
+        last_state = traj[-1][-1]
+        traj.append((last_state, None, wrapper.env.reward(last_state), None))
 
         # generate accumulated rewards at each time step
         G_t = np.zeros(len(traj))
@@ -95,7 +110,7 @@ def monte_carlo(wrapper, T:int=0, n:int=1, eps:float=1e-2):
                 G_t[i] += (gamma ** j) * t[2]
 
         # update N, G, and V_pi for each state
-        V_pi_new = V_pi_old
+        V_pi_new = np.copy(V_pi_old)
         for t, g in zip(traj, G_t):
             s = t[0]
             if nth_visit[s] < n:
@@ -103,18 +118,39 @@ def monte_carlo(wrapper, T:int=0, n:int=1, eps:float=1e-2):
                 N[s] += 1
                 G[s] += g
                 V_pi_new[s] = G[s] / N[s]
-
+    
         # check for convergence
-        if np.amax(np.abs(V_pi_new - V_pi_old)) < eps:
+        if np.max(np.abs(V_pi_new - V_pi_old)) < eps:
             break
 
         # prepare next rollout
         iters += 1
-        V_pi_old = V_pi_new
+        V_pi_old = np.copy(V_pi_new)
 
     print('Monte Carlo iterations to converge: {}'.format(iters+1))
 
     return V_pi_new
+
+def temporal_difference(mdp, agent, step_size=0.1, eps=1e-3, restart=True):
+    '''
+    Learn optimal value function given an MDP environment with Temporal Difference learning
+
+    Parameters:
+    mdp: MDP object
+    agent: Agent object (with policy)
+    eps: convergence error
+    restart: whether to restart environment after reaching end state
+
+    Returns:
+    V_pi_new: optimal value function
+    '''
+    nS = mdp.nS
+    V_pi_old = np.zeros(nS, dtype=np.float32)
+    curr_state = mdp.start
+
+    while True:
+        pass
+
 
 # compute expected  linear feature counts mu[s][a] under optimal policy
 # USE DETERMINISTIC POLICIES (AS INPUTS) FOR NOW
