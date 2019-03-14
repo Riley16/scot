@@ -120,16 +120,17 @@ def stoch2det_policy(stoch_pol, nS):
     return det_pol
 
 
-def maxLikelihoodIRL(D, mdp, step_size = 0.01, eps=1e-03, max_grad_ascent_steps = None):
+def maxLikelihoodIRL(D, mdp, step_size = 0.01, eps=1e-02, max_steps=float("inf"), verbose=False):
     """
     Maximum Likelihood IRL: returns maximally likely reward function under Boltzmann policy for given set of rewards
-    (see Vroman 2011 (http://www.icml-2011.org/papers/478_icmlpaper.pdf) for original paper,
-    Ratia 2012 (https://arxiv.org/pdf/1202.1558.pdf) for likelihood gradient formula)
+    See Vroman 2011 (http://www.icml-2011.org/papers/478_icmlpaper.pdf) for original paper,
+    Ratia 2012 (https://arxiv.org/pdf/1202.1558.pdf) for likelihood gradient formula.
 
     :param D: list of trajectories of an optimal policy in the given MDP mdp
     :param mdp: MDP environment
     :param eps: convergence criteria, float
-    :param max_grad_steps: max number of steps in gradient ascent, int
+    :param max_steps: max number of steps in gradient ascent, int
+    :param verbose: verbosity of algorithmic reporting
     :return: r_weights: reward weights as np array
     """
 
@@ -148,7 +149,11 @@ def maxLikelihoodIRL(D, mdp, step_size = 0.01, eps=1e-03, max_grad_ascent_steps 
             traj_states.append(traj[i][0])
     sa_traj = np.array(sa_traj)
 
-    for i in range(50):
+    # convergence criteria
+    iters = 0
+    delta = eps + 1
+    while delta > eps and iters < max_steps:
+        iters += 1
         # compute value function and optimal policy under current reward estimate
         # Use max iterations of 100 in line with Vroman et al
         values, policy = value_iteration(mdp, r_weights=r_weights)
@@ -167,21 +172,27 @@ def maxLikelihoodIRL(D, mdp, step_size = 0.01, eps=1e-03, max_grad_ascent_steps 
         Qvalues_normalized = beta * (Qvalues - np.max(Qvalues))
         likelihoods = np.exp(Qvalues_normalized)
         for j in range(len(traj_states)):
-            likelihoods[j, :] /= np.sum(likelihoods[j])
+            likelihood_sum = np.sum(likelihoods[j])
+            likelihoods[j, :] /= likelihood_sum
 
         # compute state-action feature counts under current optimal policy
         mu, mu_sa = get_feature_counts(mdp, policy, tol=1.0e-03)
 
         # get likelihood gradient
-        grad = np.zeros(mdp.weights.shape)
-        # grad = np.sum(np.array([(mu_sa[s, a] - np.sum(np.array([likelihoods[s, b]*mu_sa[s, b] for b in range(mdp.nA)]), axis=0))
-        #                       /likelihoods[s, a] for s, a in sa_traj]))
+        grad = np.sum(np.array([(mu_sa[s, a] - np.sum(np.array([likelihoods[s, b]*mu_sa[s, b] for b in range(mdp.nA)]), axis=0))
+                                for s, a in sa_traj]), axis=0)
 
-        grad = beta*np.sum(np.array([(mu[s] - np.sum(np.array([likelihoods[s, b]*mu[s] for b in range(mdp.nA)]), axis=0))
-                              for s, a in sa_traj]))
+        # perform gradient ascent step, use step size schedule of gradient ascent iterations
+        r_weights_old = np.copy(r_weights)
+        r_weights += step_size/iters*grad
 
-        # perform gradient ascent step
-        r_weights += step_size*grad
+        # normalize r_weights to constrain L2 norm and force a unique reward weight vector
+        r_weights /= np.linalg.norm(r_weights, ord=2)
 
+        # convergence criterion
+        delta = np.linalg.norm(r_weights - r_weights_old, 1)
+        print(delta)
+
+    if verbose:
+        print("MLIRL iterations: {}".format(iters))
     return r_weights
-
