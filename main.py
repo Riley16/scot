@@ -30,12 +30,13 @@ def main():
 
     np.random.seed(2)
     trajs = SCOT(test.env, None, test.env.weights, verbose=True)
-    r_weights = maxLikelihoodIRL(trajs, test.env, step_size=0.1, eps=1.0e-03, max_steps=1000, verbose=True)
+    # student's inferred reward function from the trajectories from SCOT
+    r_weights = maxLikelihoodIRL(trajs, test.env, step_size=0.1, eps=1.0e-03, max_steps=1000, verbose=True) 
     print(test.env.weights)
     print(r_weights)
-    values_MLIRL, policy_MLIRL = value_iteration(mdp=test.env, r_weights=r_weights)
-    values_MLIRL = value_iteration(mdp=test.env, policy=policy_MLIRL)
-    values_opt, policy_opt = value_iteration(mdp=test.env)
+    values_MLIRL, policy_MLIRL = value_iteration(mdp=test.env, r_weights=r_weights) # student's policy and value function under student's reward funct
+    values_MLIRL = value_iteration(mdp=test.env, policy=policy_MLIRL) # value of student's policy under teacher's reward funct (true)
+    values_opt, policy_opt = value_iteration(mdp=test.env) # optimal value and policy under teacher's reward funct (true)
     print(policy_MLIRL)
     print(policy_opt)
     policy_similarity = np.sum(policy_MLIRL == policy_opt)/policy_MLIRL.shape[0]
