@@ -13,31 +13,13 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-env', choices=['basic', 'multiple', 'niekum', 'paper_test'], default='niekum')
     args = parser.parse_args()
+    return args.env
 
-    if args.env == 'basic':
-        test = BasicGrid()
-    elif args.env == 'multiple':
-        test = MultipleFeatures()
-    elif args.env == "niekum":
-        test = BrownNiekum()
-    elif args.env == "cooridor":
-        test = Cooridor()
-    elif args.env == "loop":
-        test = Loop()
-    elif args.env == "paper_test":
-        test = FromPaper()
-        print("HERE")
-
-    else:
-        test = BrownNiekum()
-
-    return test
 
 
 def main():
-    #parse_arguments()
+    env = parse_arguments()
 
-    #print("{} grid environment:".format(test.__class__.__name__))
 
     total_sum = []
     num_trajs = []
@@ -45,7 +27,23 @@ def main():
     times = []
     numTests = 1
     for i in range(numTests):
-        test = FromPaper()
+        if env == 'basic':
+            test = BasicGrid()
+        elif env == 'multiple':
+            test = MultipleFeatures()
+        elif env == "niekum":
+            test = BrownNiekum()
+        elif env == "cooridor":
+            test = Cooridor()
+        elif env == "loop":
+            test = Loop()
+        elif env == "paper_test":
+            test = FromPaper()
+        else:
+            test = BrownNiekum()
+        # print("{} grid environment:".format(test.__class__.__name__))
+
+
         test.env.render()
 
         print("\n ITER", i)
