@@ -2,7 +2,7 @@ import numpy as np
 
 
 # Value Iteration, returns optimal value function and implied optimal policy
-def value_iteration(mdp, r_weights=None, tol=1e-3, verbose=False):
+def value_iteration(mdp, policy=None, r_weights=None, tol=1e-3, verbose=False):
     """
     Learn value function and policy by using value iteration method for a given
     gamma and environment.
@@ -24,7 +24,11 @@ def value_iteration(mdp, r_weights=None, tol=1e-3, verbose=False):
     nA = mdp.nA
     gamma = mdp.gamma
     value_function = np.zeros(nS)
-    policy = np.zeros(nS, dtype=int)
+    if policy is None:
+        policy = np.zeros(nS, dtype=int)
+        eval_pol = False
+    else:
+        eval_pol = True
 
     k = 0
     eps = tol + 1
@@ -35,8 +39,9 @@ def value_iteration(mdp, r_weights=None, tol=1e-3, verbose=False):
 
             # NEED TO ACCOUNT FOR TERMINAL STATES? NIEKUM IS INCLUDING TERMINAL AND INITIAL REWARDS
             for s in range(nS):
-                policy[s] = max([(mdp.reward(s) + gamma * sum([mdp.P[s, a, succ] * value_function_old[succ] # * float(not mdp.is_terminal(s))
-                                       for succ in range(nS)]), a) for a in range(nA)])[1]
+                if not eval_pol:
+                    policy[s] = max([(mdp.reward(s) + gamma * sum([mdp.P[s, a, succ] * value_function_old[succ] # * float(not mdp.is_terminal(s))
+                                           for succ in range(nS)]), a) for a in range(nA)])[1]
 
                 value_function[s] = mdp.reward(s) + gamma * sum([mdp.P[s, int(policy[s]), succ] * value_function_old[succ] * float(not mdp.is_terminal(s))
                                          for succ in range(nS)])
@@ -49,9 +54,10 @@ def value_iteration(mdp, r_weights=None, tol=1e-3, verbose=False):
 
             # NEED TO ACCOUNT FOR TERMINAL STATES? NIEKUM IS INCLUDING TERMINAL AND INITIAL REWARDS
             for s in range(nS):
-                policy[s] = max([(mdp.reward(s, w=r_weights) + gamma * sum(
-                    [mdp.P[s, a, succ] * value_function_old[succ]  # * float(not mdp.is_terminal(s))
-                     for succ in range(nS)]), a) for a in range(nA)])[1]
+                if not eval_pol:
+                    policy[s] = max([(mdp.reward(s, w=r_weights) + gamma * sum(
+                        [mdp.P[s, a, succ] * value_function_old[succ]  # * float(not mdp.is_terminal(s))
+                         for succ in range(nS)]), a) for a in range(nA)])[1]
 
                 value_function[s] = mdp.reward(s, w=r_weights) + gamma * sum(
                     [mdp.P[s, int(policy[s]), succ] * value_function_old[succ] * float(not mdp.is_terminal(s))
@@ -61,7 +67,10 @@ def value_iteration(mdp, r_weights=None, tol=1e-3, verbose=False):
 
     if verbose:
         print('VI iterations to convergence: %d' % k)
-    return value_function, policy
+    if not eval_pol:
+        return value_function, policy
+    else:
+        return value_function
 
 
 # compute expected  linear feature counts mu[s][a] under optimal policy

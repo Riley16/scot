@@ -25,8 +25,6 @@ def SCOT(mdp, s_start, w, verbose=False):
             represented as lists of (s, a, r, s') experience tuples
     """
 
-    t = time.time()
-
     # compute optimal policy pi_opt
     _, teacher_pol = value_iteration(mdp)  # using variation of VI code from HW1
     #print("Teacher policy: {}".format(teacher_pol))
@@ -35,10 +33,6 @@ def SCOT(mdp, s_start, w, verbose=False):
 
     # compute expected feature counts mu[s][a] under optimal policy
     mu, mu_sa = get_feature_counts(mdp, teacher_pol)
-
-    print("VI, feature counts")
-    print(time.time() - t)
-    t = time.time()
 
     # compute BEC of teacher as list of vectors defining halfspaces of linear reward
     # function parameters implied by teacher's policy
@@ -64,13 +58,8 @@ def SCOT(mdp, s_start, w, verbose=False):
 
     # remove trivial, duplicate, and redundant half-space constraints
     BEC = refineBEC(w, BEC)
-
-    print("compute and refine teacher BEC")
-    print(time.time() - t)
-    t = time.time()
-
-
-    print("BEC", BEC)
+    if verbose:
+        print("BEC", BEC)
     # (1) compute candidate demonstration trajectories
 
     # STATISTICAL VALUES FOR NUMBER OF TRAJECTORIES WITH STOCHASTIC TRANSITIONS?
@@ -95,13 +84,6 @@ def SCOT(mdp, s_start, w, verbose=False):
         print("number of demonstration trajectories:")
         print(len(demo_trajs))
 
-
-    print("get demonstration trajectories")
-    print(time.time() - t)
-    t = time.time()
-
-
-    # print("demo_trajs", demo_trajs)
     # (2) greedy set cover algorithm to compute maximally informative trajectories
     U = set()
     for i in range(BEC.shape[0]):
@@ -113,30 +95,19 @@ def SCOT(mdp, s_start, w, verbose=False):
 
     # greedy set cover algorithm
     """
-        the set cover problem is to identify the smallest sub-collection of S whose union equals the universe.
-        For example, consider the universe U={1,2,3,4,5} and the collection of sets S={{1,2,3},{2,4},{3,4},{4,5}}}
-        """
-    # SHOULD BE ABLE TO ELIMINATE ONE OF THE SET SUBTRACTIONS U - C
-    # MIGHT BE THAT CANDIDATE TRAJECTORY SET DOESN'T COVER TEACHER BEC
-    # CHECK THE CODE THAT i ELIMINATED IN MY LAST COMMIT, MIGHT HAVE BEEN A MISTAKE
-    # SHOULD ALWAYS TERMINATE... AND SHOULDN'T ITERATE FOR MORE THAN THE NUMBER OF DEMONSTRATION TRAJECTORIES
-    # SHOULDN'T BE RANDOM
-
+    the set cover problem is to identify the smallest sub-collection of S whose union equals the universe.
+    For example, consider the universe U={1,2,3,4,5} and the collection of sets S={{1,2,3},{2,4},{3,4},{4,5}}}
+    """
     BECs_trajs = []
     for traj in demo_trajs:
         BECs_trajs.append(compute_traj_BEC(traj, mu, mu_sa, mdp, w))
 
     while len(U_sub_C) > 0:
-        # while len(U - C) > 0:
-        t_iter = time.time()
         t_list = []  # collects the cardinality of the intersection between BEC(traj|pi*) and U \ C
         BEC_list = []
-        t_traj_BEC = time.time()
         for BEC_traj in BECs_trajs:
             BEC_list.append(BEC_traj)
             t_list.append(len(BEC_traj.intersection(U_sub_C)))
-        print("demo traj BEC computation")
-        print(time.time() - t_traj_BEC)
         t_greedy_index = t_list.index(max(t_list))
         t_greedy = demo_trajs[t_greedy_index]  # argmax over t_list to find greedy traj
         del BECs_trajs[t_greedy_index]
@@ -145,59 +116,24 @@ def SCOT(mdp, s_start, w, verbose=False):
         C = C.union(BEC_list[t_greedy_index])
         U_sub_C = U - C
 
-        # [8, 4, 4, 5, 25, 6, 5, 7, 5, 4]
-
-        print("greedy set cover iteration")
-        print(time.time() - t_iter)
-        # t_iter = time.time()
-
-
-    # while len(U_sub_C) > 0:
-    #     # while len(U - C) > 0:
-    #     t_iter = time.time()
-    #     t_list = []  # collects the cardinality of the intersection between BEC(traj|pi*) and U \ C
-    #     BEC_list = []
-    #     t_traj_BEC = time.time()
-    #     for traj in demo_trajs:
-    #         BEC_traj = compute_traj_BEC(traj, mu, mu_sa, mdp, w)
-    #         BEC_list.append(BEC_traj)
-    #         # BEC_traj = BEC_traj.intersection(U - C)
-    #         BEC_traj = BEC_traj.intersection(U_sub_C)
-    #         t_list.append(len(BEC_traj))
-    #     print("demo traj BEC computation")
-    #     print(time.time() - t_traj_BEC)
-    #     t_greedy_index = t_list.index(max(t_list))
-    #     t_greedy = demo_trajs[t_greedy_index]  # argmax over t_list to find greedy traj
-    #     del demo_trajs[t_greedy_index]
-    #     D.append(t_greedy)
-    #     C = C.union(BEC_list[t_greedy_index])
-    #     U_sub_C = U - C
-    #
-    #     # [8, 4, 4, 5, 25, 6, 5, 7, 5, 4]
-    #
-    #     print("greedy set cover iteration")
-    #     print(time.time() - t_iter)
-    #     # t_iter = time.time()
-
-    print("trajectories", D)
-    lens = [len(s) for s in D]
-    print(len(D), lens)
+    if verbose:
+        print("trajectories", D)
+        lens = [len(s) for s in D]
+        print(len(D), lens)
     return D
 
 
 def compute_traj_BEC(traj, mu, mu_sa, mdp, w):
     # compute BEC of trajectory as numpy array
-    BEC_traj_np = np.empty((mdp.nA * len(traj), w.shape[0]), dtype=float)
+    BEC_traj_np = np.zeros((mdp.nA * len(traj), w.shape[0]), dtype=float)
     for i in range(len(traj)):
         (s, a, r, s_new) = traj[i]
         for b in range(mdp.nA):
-            BEC_traj_np[i * mdp.nA + b] = mu[s] - mu_sa[s, b]
+            if b != a:
+                BEC_traj_np[i * mdp.nA + b] = mu[s] - mu_sa[s, b]
 
     # normalize and remove trivial and redundant constraints from BEC of trajectory
-    t_refine = time.time()
     BEC_traj_np = refineBEC(w, BEC_traj_np)
-    print("refineBEC time")
-    print(time.time()-t_refine)
 
     # convert BEC of trajectory to a set
     BEC_traj = set()
@@ -221,10 +157,10 @@ def removeLinRedundancies(BEC, bounds):
 
 def refineBEC(w, BEC):
     # remove trivial (all zero) constraints
-    t_refine_start = time.time()
     triv_i = []
-    for i in range(BEC.shape[0] - 1, -1, -1):
-        if all(BEC[i] == np.zeros(w.shape[0])):
+    z = np.zeros(w.shape[0])
+    for i in range(BEC.shape[0]):
+        if np.array_equal(BEC[i], z):
             triv_i.append(i)
     BEC = np.delete(BEC, triv_i, 0)
 
@@ -233,27 +169,13 @@ def refineBEC(w, BEC):
         BEC[i] = BEC[i] / np.linalg.norm(BEC[i])
 
     # remove duplicate BEC constraints
-    triv_i = []
-    for i in range(BEC.shape[0]-1):
-        for j in range(i+1, BEC.shape[0]):
-            if np.array_equal(BEC[i], BEC[j]):
-                triv_i.append(j)
-    BEC = np.delete(BEC, triv_i, 0)
-
-    print("refine without linaer redundancies")
-    print(time.time() - t_refine_start)
+    BEC_unique = set()
+    for i in range(BEC.shape[0]):
+        BEC_unique.add(tuple(BEC[i].tolist()))
+    BEC = np.array(list(BEC_unique))
 
     # remove redundant half-space constraints with linear programming
     bounds = tuple([(None, None) for _ in range(w.shape[0])])
-    # TRY ADDING VARIABLE BOUNDS WHICH DO NOT AFFECT THE SOLUTIONS
-    # bounds = tuple([(-1, 1) for _ in range(w.shape[0])])
-
-    # add BEC constraints incrementally to try and improve performance
-    # BEC_incr = np.zeros(BEC.shape)
-    # for i in range(BEC.shape[0] - 1, -1, -1):
-    #     BEC_incr[i] = BEC[i]
-    #     BEC_temp = removeLinRedundancies(BEC_incr[i:BEC_incr.shape[0]], bounds)
-
     BEC = removeLinRedundancies(BEC, bounds)
 
     return BEC
