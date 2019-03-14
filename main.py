@@ -41,16 +41,25 @@ def main():
     policy_similarity = np.sum(policy_MLIRL == policy_opt)/policy_MLIRL.shape[0]
 
     # policy similarity
+    print("Policy similarity:")
     print(policy_similarity)
     print(values_MLIRL)
     print(values_opt)
 
     # value gain
     # FOR NOW, THE START STATE DISTRIBUTION START_DIST DOES NOT HAVE AN ELEMENT FOR THE STATE nS
-    value_gain_opt = np.dot(test.env.start_dist, values_opt[:-1])
-    print(value_gain_opt)
-    value_gain_MLIRL = np.dot(test.env.start_dist, values_MLIRL[:-1])
+    total_value_opt = np.dot(test.env.start_dist, values_opt[:-1])
+    print("optimal expected value")
+    print(total_value_opt)
+
+    total_value_MLIRL = np.dot(test.env.start_dist, values_MLIRL[:-1])
+    print("MLIRL expected value")
+    print(total_value_MLIRL)
+
+    value_gain_MLIRL = total_value_MLIRL/total_value_opt
+    print("Value gain of MLIRL")
     print(value_gain_MLIRL)
+
 
 
 if __name__ == "__main__":
