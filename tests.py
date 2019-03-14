@@ -134,8 +134,8 @@ class MultipleFeatures(object):
         return policy
 
 
-class MultipleFeatures_Test(object):
-    ''' Grid environment with multiple features. '''
+class FromPaper(object):
+    ''' 9x9 Grid environment with one hot features. '''
     def __init__(self):
         features = [
             {
@@ -180,7 +180,7 @@ class MultipleFeatures_Test(object):
                 'squares': [[0, 7], [1, 7], [2, 7], [3, 7], [4, 7], [5, 7], [6, 7], [7, 7], [8, 7]]
             }
         ]
-        self.env = Grid(9, 9, 0.9, white_r=-1, features_sq=features, noise=0.0, weights=None, start_corner=True)
+        self.env = Grid(9, 9, 0.9, white_r=-1, gen_features="random", noise=0.0, n_features=5, weights="random", start_corner=True, one_hot=True)
         self.policy = self.init_policy()
         self.agent = Agent(self.policy, self.env.nS, self.env.nA)
         self.wrapper = Wrapper(self.env, self.agent, log=True)

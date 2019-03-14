@@ -25,9 +25,12 @@ def parse_arguments():
     elif args.env == "loop":
         test = Loop()
     elif args.env == "paper_test":
-        test = MultipleFeatures_Test()
+        test = FromPaper()
+        print("HERE")
+
     else:
         test = BrownNiekum()
+
     return test
 
 
@@ -40,9 +43,9 @@ def main():
     num_trajs = []
     all_lens = []
     times = []
-    numTests = 20
+    numTests = 1
     for i in range(numTests):
-        test = BrownNiekum()
+        test = FromPaper()
         test.env.render()
 
         print("\n ITER", i)

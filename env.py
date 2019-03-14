@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Tuple, List, Dict, Any, Union
 from actions import ACTIONS
+from random import randint
 
 # Grid environment
 class Grid(object):
@@ -13,7 +14,7 @@ class Grid(object):
     def __init__(self, height:int, width:int, gamma:float, white_r:float=None,
                 features_sq:List[Dict]=None, gen_features:Union[List[List], Any]=None, n_features:int=None,
                 noise:float=0.0, weights=None,
-                start_corner=True, start_dist=None, end_pos:Tuple=None):
+                start_corner=True, start_dist=None, end_pos:Tuple=None, one_hot=False):
         '''
         Initialize Grid environment
 
@@ -77,11 +78,20 @@ class Grid(object):
             elif gen_features == 'random':
                 if not isinstance(n_features, int):
                     print("Must specify integer number of state features for random initialization!")
-                self.s_features = [np.random.random_integers(0, 1, n_features) for _ in range(self.nS)]
-                #print(self.s_features)
+
+                if one_hot:
+
+                    self.s_features = np.eye(n_features)[np.random.choice(n_features, self.nS)]
+                    print('one HOT', self.s_features)
+
+                else:
+                    self.s_features = [np.random.random_integers(0, 1, n_features - 1) for _ in range(self.nS)]
+                    #print(self.s_features)
+
 
                 self.board = np.array([[self.reward(self.grid_to_state((h, w)))
                                         for w in range(width)] for h in range(height)], dtype=np.float32)
+                print(self.board)
             else:
                 self.s_features = [np.array(gen_features[s]) for s in range(self.nS)]
             self.board = np.array([[self.reward(self.grid_to_state((h, w)))
@@ -89,7 +99,6 @@ class Grid(object):
         elif features_sq is not None:
             n_features = len(features_sq) + 1  # WHY "+ 1"?
             white_ft = tuple(1 if i == 0 else 0 for i in range(n_features))
-
             self.s_features = {s: white_ft for s in range(self.nS)} # initialize all features to white squares
             self.board = np.full([height, width], white_r, dtype=np.float32) # initialize all rewards to [white_r]
 
