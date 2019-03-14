@@ -40,7 +40,7 @@ def main():
     num_trajs = []
     all_lens = []
     times = []
-    numTests = 2
+    numTests = 20
     for i in range(numTests):
         test = BrownNiekum()
         test.env.render()

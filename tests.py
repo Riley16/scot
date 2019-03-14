@@ -232,7 +232,7 @@ class BrownNiekum(object):
         #                 noise=0.0, start_corner=False)
 
         # random feature assignments for ten features, random reward weights
-        self.env = Grid(6, 6, 0.9, gen_features="random", n_features=15, weights="random",
+        self.env = Grid(6, 6, 0.9, gen_features="random", n_features=25, weights="random",
                         noise=0.0, start_corner=False)
 
         self.policy = self.init_policy()
