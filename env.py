@@ -13,7 +13,7 @@ class Grid(object):
     def __init__(self, height:int, width:int, gamma:float, white_r:float=None,
                 features_sq:List[Dict]=None, gen_features:Union[List[List], Any]=None, n_features:int=None,
                 noise:float=0.0, weights=None,
-                start_corner=True, start_dist=None, end_pos:Tuple=None):
+                start_corner=True, start_dist=None, end_pos:Tuple=None, one_hot=False):
         '''
         Initialize Grid environment
 
@@ -58,8 +58,8 @@ class Grid(object):
                 # random initialization of reward weights in [-1,0]^n_features
                 self.n_features = n_features
                 self.weights = -np.random.rand(self.n_features)
-                print("random reward weights:")
-                print(self.weights)
+                #print("random reward weights:")
+                #print(self.weights)
             else:
                 assert isinstance(weights, np.ndarray)
                 self.weights = weights
@@ -77,10 +77,15 @@ class Grid(object):
             elif gen_features == 'random':
                 if not isinstance(n_features, int):
                     print("Must specify integer number of state features for random initialization!")
-                self.s_features = [np.random.random_integers(0, 1, n_features) for _ in range(self.nS)]
+                if one_hot:
+                    self.s_features = np.eye(n_features)[np.random.choice(n_features, self.nS)]
+
+                else:
+                    self.s_features = [np.random.random_integers(0, 1, n_features - 1) for _ in range(self.nS)]
 
                 self.board = np.array([[self.reward(self.grid_to_state((h, w)))
                                         for w in range(width)] for h in range(height)], dtype=np.float32)
+                print(self.board)
             else:
                 self.s_features = [np.array(gen_features[s]) for s in range(self.nS)]
             self.board = np.array([[self.reward(self.grid_to_state((h, w)))
@@ -88,7 +93,6 @@ class Grid(object):
         elif features_sq is not None:
             n_features = len(features_sq) + 1  # WHY "+ 1"?
             white_ft = tuple(1 if i == 0 else 0 for i in range(n_features))
-
             self.s_features = {s: white_ft for s in range(self.nS)} # initialize all features to white squares
             self.board = np.full([height, width], white_r, dtype=np.float32) # initialize all rewards to [white_r]
 
@@ -105,7 +109,7 @@ class Grid(object):
                     n_color_sq = int(np.sqrt(width * height / n_features))
                     squares = list(zip(
                         np.random.random_integers(0, width-1, n_color_sq), np.random.random_integers(0, height-1, n_color_sq)))
-                print('{} squares: {}'.format(color, squares))
+                #print('{} squares: {}'.format(color, squares))
 
                 ft_vec = tuple(1 if i == idx else 0 for i in range(n_features))
                 for h, w in squares:
@@ -212,7 +216,7 @@ class Grid(object):
         ''' Outputs state to console '''
         for h in range(self.board.shape[0]):
             s = [str(val) for val in self.board[h, :]]
-            print('\t'.join(s))
+            #print('\t'.join(s))
 
     def state_to_grid(self, s):
         return s // self.board.shape[1], s % self.board.shape[1]

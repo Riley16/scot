@@ -58,6 +58,7 @@ def SCOT(mdp, s_start, w, verbose=False):
 
     # remove trivial, duplicate, and redundant half-space constraints
     BEC = refineBEC(w, BEC)
+
     if verbose:
         print("BEC", BEC)
     # (1) compute candidate demonstration trajectories
@@ -121,7 +122,6 @@ def SCOT(mdp, s_start, w, verbose=False):
         lens = [len(s) for s in D]
         print(len(D), lens)
     return D
-
 
 def compute_traj_BEC(traj, mu, mu_sa, mdp, w):
     # compute BEC of trajectory as numpy array

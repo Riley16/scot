@@ -134,53 +134,11 @@ class MultipleFeatures(object):
         return policy
 
 
-class MultipleFeatures_Test(object):
-    ''' Grid environment with multiple features. '''
+class FromPaper(object):
+    ''' 9x9 Grid environment with one hot features. '''
     def __init__(self):
-        features = [
-            {
-                'color': 'gray',
-                'reward': -10.0,
-                'squares': [[0, 0], [0, 8], [1, 0], [1, 8], [2, 0], [2, 8], [3, 0], [3, 8], [4, 0], [4, 8],
-                            [5, 0], [5, 8], [6, 0], [6, 8], [7, 0], [7, 8], [8, 0], [8, 8]]
-            },
-            {
-                'color': 'white',
-                'reward': -1.0,
-                'squares': [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [7, 1], [8, 1]]
-            },
-            {
-                'color': 'c2',
-                'reward': -2.0,
-                'squares': [[0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [6, 2], [7, 2], [8, 2]]
-            },
-            {
-                'color': 'c3',
-                'reward': -3.0,
-                'squares': [[0, 3], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3], [6, 3], [7, 3], [8, 3]]
-            },
-            {
-                'color': 'c4',
-                'reward': -4.0,
-                'squares': [[0, 4], [1, 4], [2, 4], [3, 4], [4, 4], [5, 4], [6, 4], [7, 4], [8, 4]]
-            },
-            {
-                'color': 'c5',
-                'reward': -5.0,
-                'squares': [[0, 5], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [7, 5], [8, 5]]
-            },
-            {
-                'color': 'c6',
-                'reward': -6.0,
-                'squares': [[0, 6], [1, 6], [2, 6], [3, 6], [4, 6], [5, 6], [6, 6], [7, 6], [8, 6]]
-            },
-            {
-                'color': 'c7',
-                'reward': -7.0,
-                'squares': [[0, 7], [1, 7], [2, 7], [3, 7], [4, 7], [5, 7], [6, 7], [7, 7], [8, 7]]
-            }
-        ]
-        self.env = Grid(9, 9, 0.9, white_r=-1, features_sq=features, noise=0.0, weights=None, start_corner=True)
+        
+        self.env = Grid(9, 9, 0.9, white_r=-1, gen_features="random", noise=0.0, n_features=8, weights="random", start_corner=True, one_hot=True)
         self.policy = self.init_policy()
         self.agent = Agent(self.policy, self.env.nS, self.env.nA)
         self.wrapper = Wrapper(self.env, self.agent, log=True)
@@ -232,6 +190,7 @@ class BrownNiekum(object):
         #                 noise=0.0, start_corner=False)
 
         # random feature assignments for ten features, random reward weights
+        self.env = Grid(6, 6, 0.9, gen_features="random", n_features=25, weights="random",
         # self.env = Grid(2, 2, 0.9, gen_features="random", n_features=15, weights="random",
         #                 noise=0.0, start_corner=False)
 
@@ -249,5 +208,5 @@ class BrownNiekum(object):
 
     def init_policy(self):
         _, policy = value_iteration(self.env)
-        print('Policy from VI: {}'.format(policy))
+        #print('Policy from VI: {}'.format(policy))
         return policy
