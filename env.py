@@ -78,7 +78,6 @@ class Grid(object):
                 if not isinstance(n_features, int):
                     print("Must specify integer number of state features for random initialization!")
                 self.s_features = [np.random.random_integers(0, 1, n_features) for _ in range(self.nS)]
-                #print(self.s_features)
 
                 self.board = np.array([[self.reward(self.grid_to_state((h, w)))
                                         for w in range(width)] for h in range(height)], dtype=np.float32)
@@ -106,7 +105,7 @@ class Grid(object):
                     n_color_sq = int(np.sqrt(width * height / n_features))
                     squares = list(zip(
                         np.random.random_integers(0, width-1, n_color_sq), np.random.random_integers(0, height-1, n_color_sq)))
-                #print('{} squares: {}'.format(color, squares))
+                print('{} squares: {}'.format(color, squares))
 
                 ft_vec = tuple(1 if i == idx else 0 for i in range(n_features))
                 for h, w in squares:
