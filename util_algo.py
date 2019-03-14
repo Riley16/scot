@@ -32,38 +32,20 @@ def value_iteration(mdp, policy=None, r_weights=None, tol=1e-3, verbose=False):
 
     k = 0
     eps = tol + 1
-    if r_weights is None:
-        while eps > tol and k < 100:
-            k = k + 1
-            value_function_old = np.copy(value_function)
+    while eps > tol and k < 100:
+        k = k + 1
+        value_function_old = np.copy(value_function)
 
-            # NEED TO ACCOUNT FOR TERMINAL STATES? NIEKUM IS INCLUDING TERMINAL AND INITIAL REWARDS
-            for s in range(nS):
-                if not eval_pol:
-                    policy[s] = max([(mdp.reward(s) + gamma * sum([mdp.P[s, a, succ] * value_function_old[succ] # * float(not mdp.is_terminal(s))
-                                           for succ in range(nS)]), a) for a in range(nA)])[1]
+        # NEED TO ACCOUNT FOR TERMINAL STATES? NIEKUM IS INCLUDING TERMINAL AND INITIAL REWARDS
+        for s in range(nS):
+            if not eval_pol:
+                policy[s] = max([(mdp.reward(s, w=r_weights) + gamma * sum([mdp.P[s, a, succ] * value_function_old[succ] # * float(not mdp.is_terminal(s))
+                                       for succ in range(nS)]), a) for a in range(nA)])[1]
 
-                value_function[s] = mdp.reward(s) + gamma * sum([mdp.P[s, int(policy[s]), succ] * value_function_old[succ] * float(not mdp.is_terminal(s))
-                                         for succ in range(nS)])
+            value_function[s] = mdp.reward(s) + gamma * sum([mdp.P[s, int(policy[s]), succ] * value_function_old[succ] * float(not mdp.is_terminal(s))
+                                     for succ in range(nS)])
 
-            eps = max(np.absolute(value_function - value_function_old))
-    else:
-        while eps > tol and k < 100:
-            k = k + 1
-            value_function_old = np.copy(value_function)
-
-            # NEED TO ACCOUNT FOR TERMINAL STATES? NIEKUM IS INCLUDING TERMINAL AND INITIAL REWARDS
-            for s in range(nS):
-                if not eval_pol:
-                    policy[s] = max([(mdp.reward(s, w=r_weights) + gamma * sum(
-                        [mdp.P[s, a, succ] * value_function_old[succ]  # * float(not mdp.is_terminal(s))
-                         for succ in range(nS)]), a) for a in range(nA)])[1]
-
-                value_function[s] = mdp.reward(s, w=r_weights) + gamma * sum(
-                    [mdp.P[s, int(policy[s]), succ] * value_function_old[succ] * float(not mdp.is_terminal(s))
-                     for succ in range(nS)])
-
-            eps = max(np.absolute(value_function - value_function_old))
+        eps = max(np.absolute(value_function - value_function_old))]
 
     if verbose:
         print('VI iterations to convergence: %d' % k)
