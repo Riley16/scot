@@ -1,7 +1,6 @@
 import numpy as np
 from typing import Tuple, List, Dict, Any, Union
 from actions import ACTIONS
-from random import randint
 
 # Grid environment
 class Grid(object):
