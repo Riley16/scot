@@ -1,4 +1,5 @@
 import numpy as np
+import env
 from wrapper import Wrapper
 from agent import Agent
 from env import Grid
@@ -91,9 +92,7 @@ def policy_improvement(P, nS, nA, value_from_policy, policy, gamma=0.9):
 		in that state according to the environment dynamics and the
 		given value function.
 	"""
-
 	new_policy = np.zeros(nS, dtype='int')
-
 	############################
 	# YOUR IMPLEMENTATION HERE #
 	for s in range(nS):
@@ -102,7 +101,14 @@ def policy_improvement(P, nS, nA, value_from_policy, policy, gamma=0.9):
 		for a in range(nA):
 			action_value = 0
 			for prob_of_trans in P[s][a]:
-                next_s =  reward, terminal
+				# get next state
+				grid_position = env.state_to_grid(s)
+				grid_move = env.actions_to_grid[a]
+				new_grid_position = grid_position + grid_move
+                next_s = env.grid_to_state(new_grid_position)
+				# get reward
+				reward = env.reward(next_s)
+				terminal = env.is_terminal(next_s)
 				action_value += (prob_of_trans * (reward + gamma * value_from_policy[next_s]))
 			q_values.append(action_value)
 		new_policy[s] = q_values.index(max(q_values)) # find the action corresponding to largest Q
@@ -137,7 +143,13 @@ def policy_iteration(policy_evaluation_function, P, nS, nA, gamma=0.9, tol=10e-3
 	i = 0
 	# initialize initial policy randomly for all states
 	old_policy = np.copy(policy)
-	while i == 0 or np.array_equal(old_policy, policy) == False: # is this the correct way to do l1 norm?
+	while i == 0 or np.array_equal(old_policy, policy) == False:
+		"""
+		VINCENT: I want to be able to pass your MC function in as policy_evaluation_function
+		Your function should take in P which is the transition function, policy, and everything
+		else below OR at least generate those things within the function (in which case I can 
+		just not pass them in here. Let me know
+		"""
 		value_function = policy_evaluation_function(P, nS, nA, policy, gamma, tol)
 		old_policy = np.copy(policy)
 		policy = policy_improvement(P, nS, nA, value_function, policy, gamma)
