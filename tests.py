@@ -191,6 +191,15 @@ class BrownNiekum(object):
 
         # random feature assignments for ten features, random reward weights
         self.env = Grid(6, 6, 0.9, gen_features="random", n_features=25, weights="random",
+        # self.env = Grid(2, 2, 0.9, gen_features="random", n_features=15, weights="random",
+        #                 noise=0.0, start_corner=False)
+
+        # basic test
+        # self.env = Grid(2, 3, 0.9, gen_features=[[1, 0],[1, 0],[1, 0],[1, 0],[0, 1],[1, 0]], weights=np.array([-1, -10]),
+        #                 noise=0.0, start_corner=False)
+
+        # tests of explicit arbitrary feature inputs on a state-by-state basis
+        self.env = Grid(9, 9, 0.9, gen_features="random", n_features=8, weights="random",
                         noise=0.0, start_corner=False)
 
         self.policy = self.init_policy()

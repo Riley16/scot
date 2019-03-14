@@ -77,16 +77,11 @@ class Grid(object):
             elif gen_features == 'random':
                 if not isinstance(n_features, int):
                     print("Must specify integer number of state features for random initialization!")
-
                 if one_hot:
-
                     self.s_features = np.eye(n_features)[np.random.choice(n_features, self.nS)]
-                    print('one HOT', self.s_features)
 
                 else:
                     self.s_features = [np.random.random_integers(0, 1, n_features - 1) for _ in range(self.nS)]
-                    #print(self.s_features)
-
 
                 self.board = np.array([[self.reward(self.grid_to_state((h, w)))
                                         for w in range(width)] for h in range(height)], dtype=np.float32)
