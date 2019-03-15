@@ -1,6 +1,9 @@
 ''' Contains functions for policy iteration and policy improvement. '''
 import numpy as np
 from wrapper import Wrapper
+from tests import BrownNiekum
+from algorithms.policy_evaluation import first_visit_monte_carlo, \
+    every_visit_monte_carlo, temporal_difference
 
 def policy_improvement(env, value_from_policy, old_policy):
     '''Given the value function from policy improve the policy.
@@ -42,7 +45,7 @@ def policy_improvement(env, value_from_policy, old_policy):
     return new_policy
 
 
-def policy_iteration(env, agent, policy_eval_func, kwargs):
+def policy_iteration(env, agent, policy_eval_func, kwargs={}):
     '''Runs policy iteration for deterministic policy.
 
     Parameters:
@@ -52,9 +55,9 @@ def policy_iteration(env, agent, policy_eval_func, kwargs):
     policy_eval_func:   function for policy evaluation
     kwargs:             dictionary of optional arguments for policy_eval_func
 
-    first_visit_monte_carlo: kwargs={T:, eps:}
-    every_visit_monte_carlo: kwargs={T:, eps:}
-    temporal_difference: kwargs={step_size:, reset:, eps:}
+    first_visit_monte_carlo: kwargs={'T':, 'eps':}
+    every_visit_monte_carlo: kwargs={'T':, 'eps':}
+    temporal_difference: kwargs={'step_size':, 'reset':, 'eps':}
 
     Returns:
     ----------
@@ -71,7 +74,7 @@ def policy_iteration(env, agent, policy_eval_func, kwargs):
     wrapper = Wrapper(env, agent, log=True)
     wrapper.agent.set_policy(old_policy)
 
-    iters = 0
+    iters = 1
     while True:
         value_function, _ = policy_eval_func(wrapper, **kwargs)
         new_policy = policy_improvement(P, nS, nA, value_function, old_policy, gamma)
@@ -87,4 +90,15 @@ def policy_iteration(env, agent, policy_eval_func, kwargs):
 
     print('Policy iteration converged in {} iterations.'.format(i))
 
-    return value_function, new_policy
+    return value_function, new_policy, i
+
+if __name__ == '__main__':
+    test = BrownNiekum()
+
+    value_function, policy, i = policy_iteration(
+        test.env, test.agent, first_visit_monte_carlo, kwargs={'T': None, 'eps': 1e-3})
+    # value_function, policy, i = policy_iteration(
+    #     test.env, test.agent, every_visit_monte_carlo, kwargs={'T': None, 'eps':1e-3})
+    # value_function, policy, i = policy_iteration(
+    #     test.env, test.agent, temporal_difference, kwargs={'step_size': 0.1, 'reset': True, 'eps':1e-3})
+    print('Policy iteration converged in {} iterations.'.format(i))

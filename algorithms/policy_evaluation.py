@@ -24,7 +24,7 @@ def every_visit_monte_carlo(wrapper, T:int=0, eps:float=1e-2):
     V_pi_old = np.zeros(nS)             # initialize value function
     iters = 0                           # track iterations
 
-    assert T > 0 or T == None
+    assert T == None or T > 0
 
     # iterate until epsilon convergence
     iters = 1
@@ -93,7 +93,7 @@ def first_visit_monte_carlo(wrapper, T:int=None, eps:float=1e-2):
     V_pi_old = np.zeros(nS)             # initialize value function
     iters = 0                           # track iterations
 
-    assert T > 0 or T == None
+    assert T == None or T > 0
 
     # iterate until epsilon convergence
     iters = 1
