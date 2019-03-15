@@ -1,14 +1,14 @@
 import numpy as np
-from util_algo import *
 from scipy.optimize import linprog
-from agent import *
-from wrapper import *
-import time
+from agent import Agent
+from wrapper import Wrapper
+from algorithms.value_iteration import value_iteration
+from util import det2stoch_policy, get_feature_counts
 
 np.random.seed(2)
 
 
-def SCOT(mdp, w, s_start=None, m=None, H=None, verbose=False):
+def scot(mdp, w, s_start=None, m=None, H=None, verbose=False):
     """
     Implements the Set Cover Optimal Teaching (SCOT) algorithm from
     "Machine Teaching for Inverse Reinforcement Learning:
@@ -146,7 +146,6 @@ def removeLinRedundancies(BEC, bounds):
         A = np.delete(BEC, i, 0)
         if A.shape[0] > 0:
             res = linprog(-BEC[i], A_ub=A, b_ub=b[:A.shape[0]], bounds=bounds)
-            # res = linprog(-BEC[i], A_ub=A, b_ub=b[:A.shape[0]], bounds=bounds, options={"tol": 1e-06})
             if res.fun <= 0 and not res.status:
                 BEC = A
     return BEC

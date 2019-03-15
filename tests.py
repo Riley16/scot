@@ -2,9 +2,9 @@ import numpy as np
 from wrapper import Wrapper
 from agent import Agent
 from env import Grid
-from actions import ACTIONS
-from util_algo import *
-from SCOT import SCOT
+from algorithms.value_iteration import value_iteration
+from util import det2stoch_policy
+
 
 class Cooridor(object):
     def __init__(self):
@@ -90,10 +90,15 @@ class BasicGrid(object):
         features = [
             {
                 'color': 'gray',
-                'reward': 10.0,
-                'squares': None
+                'reward': -10.0,
+                'squares': [[1, 1], [1, 2], [2, 1], [2, 2]]
+            },
+            {
+                'color':'rainbow',
+                'reward': 100.0,
+                'squares': [[3, 3]]
             }]
-        self.env = Grid(4, 4, 0.75, white_r=1.0, features_sq=features, start_corner=True, noise=0.0, weights=None)
+        self.env = Grid(4, 4, 0.75, white_r=-1.0, features_sq=features, start_corner=True, noise=0.0, weights=None)
         self.policy = self.init_policy()
         self.agent = Agent(self.policy, self.env.nS, self.env.nA)
         self.wrapper = Wrapper(self.env, self.agent, log=True)
@@ -207,4 +212,6 @@ class BrownNiekum(object):
 
     def init_policy(self):
         _, policy = value_iteration(self.env)
+        print('Policy from VI: {}'.format(policy))
+        policy = det2stoch_policy(policy, self.env.nS, self.env.nA)
         return policy
