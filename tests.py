@@ -174,7 +174,7 @@ class BrownNiekum(object):
                 'reward': -10.0,
                 'squares': [[1, 1]]
             }]
-        self.env = Grid(2, 3, 0.9, white_r=-1, features_sq=features, noise=0.0, start_corner=False)
+        # self.env = Grid(2, 3, 0.9, white_r=-1, features_sq=features, noise=0.0, start_corner=False)
 
         # sanity checks for various grid environment setup methods with basic Brown and Niekum environment
 
