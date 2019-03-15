@@ -2,9 +2,9 @@ import numpy as np
 from wrapper import Wrapper
 from agent import Agent
 from env import Grid
-from actions import ACTIONS
-from util_algo import *
-from SCOT import SCOT
+from algorithms.value_iteration import value_iteration
+from util import det2stoch_policy
+
 
 class Cooridor(object):
     def __init__(self):
@@ -138,6 +138,22 @@ class MultipleFeatures(object):
         print('Policy from VI: {}'.format(policy))
         return policy
 
+
+class FromPaper(object):
+    ''' 9x9 Grid environment with one hot features. '''
+    def __init__(self):
+        
+        self.env = Grid(9, 9, 0.9, white_r=-1, gen_features="random", noise=0.0, n_features=8, weights="random", start_corner=True, one_hot=True)
+        self.policy = self.init_policy()
+        self.agent = Agent(self.policy, self.env.nS, self.env.nA)
+        self.wrapper = Wrapper(self.env, self.agent, log=True)
+
+    def init_policy(self):
+        _, policy = value_iteration(self.env)
+        print('Policy from VI: {}'.format(policy))
+        return policy
+
+
 class BrownNiekum(object):
     '''
     Brown and Niekum toy environment (2019)
@@ -180,7 +196,15 @@ class BrownNiekum(object):
 
         # random feature assignments for ten features, random reward weights
         # self.env = Grid(2, 2, 0.9, gen_features="random", n_features=15, weights="random",
-                        # noise=0.0, start_corner=False)
+        #                 noise=0.0, start_corner=False)
+
+        # basic test
+        # self.env = Grid(2, 3, 0.9, gen_features=[[1, 0],[1, 0],[1, 0],[1, 0],[0, 1],[1, 0]], weights=np.array([-1, -10]),
+        #                 noise=0.0, start_corner=False)
+
+        # tests of explicit arbitrary feature inputs on a state-by-state basis
+        self.env = Grid(9, 9, 0.9, gen_features="random", n_features=8, weights="random",
+                        noise=0.0, start_corner=False)
 
         self.policy = self.init_policy()
         self.agent = Agent(self.policy, self.env.nS, self.env.nA)

@@ -1,11 +1,14 @@
 import numpy as np
-from util_algo import *
 from scipy.optimize import linprog
-from agent import *
-from wrapper import *
+from agent import Agent
+from wrapper import Wrapper
+from algorithms.value_iteration import value_iteration
+from util import det2stoch_policy, get_feature_counts
+
+np.random.seed(2)
 
 
-def SCOT(mdp, s_start, w):
+def scot(mdp, w, s_start=None, m=None, H=None, verbose=False):
     """
     Implements the Set Cover Optimal Teaching (SCOT) algorithm from
     "Machine Teaching for Inverse Reinforcement Learning:
@@ -14,8 +17,11 @@ def SCOT(mdp, s_start, w):
     Args:
         mdp: MDP environment
         s_start: list of possible initial states
-        w: weights of linear reward function of expert teacher agent
+        w (np.array): weights of linear reward function of expert teacher agent
             (featurization computed by MDP environment) as a numpy array
+        m (int): number of sample demonstration trajectories to draw per start state
+        H (int): horizon (max length) of demonstration trajectories
+        verbose (Boolean): whether to print out algorithmic runtime information
 
     Returns:
         D: list of maximally informative machine teaching trajectories
@@ -24,7 +30,6 @@ def SCOT(mdp, s_start, w):
 
     # compute optimal policy pi_opt
     _, teacher_pol = value_iteration(mdp)  # using variation of VI code from HW1
-    #print("Teacher policy: {}".format(teacher_pol))
     # convert teacher policy to stochastic policy
     teacher_pol = det2stoch_policy(teacher_pol, mdp.nS, mdp.nA)
 
@@ -35,49 +40,47 @@ def SCOT(mdp, s_start, w):
     # function parameters implied by teacher's policy
     BEC = np.empty((mdp.nS*mdp.nA, w.shape[0]))
 
-    # get features for all MDP states
-    phi_s = np.array([list(mdp.s_features[s]) for s in range(mdp.nS)]).astype(float)
-
-    # NOT NEEDED CURRENTLY
-    # T_pi = mdp.get_pol_trans(teacher_pol)
-
     # compute BEC for teacher policy
     for a in range(mdp.nA):
         BEC[a*mdp.nS:(a+1)*mdp.nS] = mu - mu_sa[:, a]
-        # FOR ANALYTICAL COMPUTATION BY NG REFERENCED IN BROWN AND NIEKUM (2019), CURRENTLY NOT WORKING, PROBABLY NOT NEEDED
-        # pol_a = det2stoch_policy(np.full(mdp.nS, a), mdp.nS, mdp.nA)
-        # T_a = mdp.get_pol_trans(pol_a)
-        # # BEC[a*mdp.nS:(a+1)*mdp.nS] = (T_pi - T_a)@np.linalg.inv(np.eye(mdp.nS) - mdp.gamma*T_pi)@phi_s
-        # test0 = T_pi - T_a
-        # test1 = np.linalg.inv(np.eye(mdp.nS) - mdp.gamma*T_pi)
-        # test2 = test0@test1
-        # test = np.ones((mdp.nS, mdp.nS))@phi_s
 
     # remove trivial, duplicate, and redundant half-space constraints
     BEC = refineBEC(w, BEC)
 
-    print("BEC", BEC)
+    if verbose:
+        print("BEC", BEC)
+
     # (1) compute candidate demonstration trajectories
 
-    # STATISTICAL VALUES FOR NUMBER OF TRAJECTORIES WITH STOCHASTIC TRANSITIONS?
-    m = 1
+    # number of demonstration trajectories to sample per start state
+    if m is None:
+        m = int(np.ceil(1/(1.0 - 0.95*mdp.noise)))
 
     teacher = Agent(teacher_pol, mdp.nS, mdp.nA)
     wrapper = Wrapper(mdp, teacher, False)
 
     demo_trajs = []
 
-    # limit trajectory length to guarantee termination of algorithm
-    # may want to increase max trajectory length for stochastic environments
+    # limit trajectory length to guarantee SCOT termination,
+    # increase max trajectory length for stochastic environments
     # may want to set trajectory limit to number of iterations required in VI/feature count computations
-    H = mdp.nS  # /(1 + 1e-6 - mdp.noise)
+    if H is None:
+        H = mdp.nS
 
-    # FOR NOW USE ALL STATES,
-    # LATER LIMIT TO JUST STATES WITH NON-ZERO START DISTRIBUTION PROBABILITIES
-    for s in range(mdp.nS):
-        demo_trajs += wrapper.eval_episodes(m, s, horizon=H)[1]
+    # sample demonstration trajectories from each starting state (either from each state with non-zero probability mass
+    # in the start state distribution of the MDP or a given set of start states
+    if s_start is None:
+        for s in range(mdp.nS):
+            if mdp.start_dist[s] > 0.0:
+                demo_trajs += wrapper.eval_episodes(m, s, horizon=H)[1]
+    else:
+        for s in s_start:
+            demo_trajs += wrapper.eval_episodes(m, s, horizon=H)[1]
 
-    print("demo_trajs", demo_trajs)
+    if verbose:
+        print("number of demonstration trajectories:")
+        print(len(demo_trajs))
+
     # (2) greedy set cover algorithm to compute maximally informative trajectories
     U = set()
     for i in range(BEC.shape[0]):
@@ -85,54 +88,75 @@ def SCOT(mdp, s_start, w):
     D = []
     C = set()
 
+    U_sub_C = U - C
+
     # greedy set cover algorithm
     """
-        the set cover problem is to identify the smallest sub-collection of S whose union equals the universe.
-        For example, consider the universe U={1,2,3,4,5} and the collection of sets S={{1,2,3},{2,4},{3,4},{4,5}}}
-        """
-    while len(U - C) > 0:
+    the set cover problem is to identify the smallest sub-collection of S whose union equals the universe.
+    For example, consider the universe U={1,2,3,4,5} and the collection of sets S={{1,2,3},{2,4},{3,4},{4,5}}}
+    """
+    BECs_trajs = []
+    for traj in demo_trajs:
+        BECs_trajs.append(compute_traj_BEC(traj, mu, mu_sa, mdp, w))
+
+    while len(U_sub_C) > 0:
         t_list = []  # collects the cardinality of the intersection between BEC(traj|pi*) and U \ C
         BEC_list = []
-        for traj in demo_trajs:
-            BEC_traj = compute_traj_BEC(traj, mu, mu_sa, mdp, w)
+        for BEC_traj in BECs_trajs:
             BEC_list.append(BEC_traj)
-            BEC_traj = BEC_traj.intersection(U - C)
-            t_list.append(len(BEC_traj))
+            t_list.append(len(BEC_traj.intersection(U_sub_C)))
         t_greedy_index = t_list.index(max(t_list))
         t_greedy = demo_trajs[t_greedy_index]  # argmax over t_list to find greedy traj
+        del BECs_trajs[t_greedy_index]
+        del demo_trajs[t_greedy_index]
         D.append(t_greedy)
         C = C.union(BEC_list[t_greedy_index])
+        U_sub_C = U - C
 
-    print("trajectories", D)
-    lens = [len(s) for s in D]
-    print(len(D), lens)
+    if verbose:
+        print("trajectories", D)
+        lens = [len(s) for s in D]
+        print(len(D), lens)
     return D
 
 
 def compute_traj_BEC(traj, mu, mu_sa, mdp, w):
     # compute BEC of trajectory as numpy array
-    BEC_traj_np = np.empty((mdp.nA * len(traj), w.shape[0]), dtype=float)
+    BEC_traj_np = np.zeros((mdp.nA * len(traj), w.shape[0]), dtype=float)
     for i in range(len(traj)):
         (s, a, r, s_new) = traj[i]
         for b in range(mdp.nA):
-            test = mu[s] - mu_sa[s, b]
-            BEC_traj_np[i * mdp.nA + b] = mu[s] - mu_sa[s, b]
+            if b != a:
+                BEC_traj_np[i * mdp.nA + b] = mu[s] - mu_sa[s, b]
 
-    # normalize and remove trival and redundant constraints from BEC of trajectory
+    # normalize and remove trivial and redundant constraints from BEC of trajectory
     BEC_traj_np = refineBEC(w, BEC_traj_np)
 
     # convert BEC of trajectory to a set
     BEC_traj = set()
     for i in range(BEC_traj_np.shape[0]):
         BEC_traj.add(tuple(BEC_traj_np[i].tolist()))
+
     return BEC_traj
+
+
+def removeLinRedundancies(BEC, bounds):
+    b = np.zeros(BEC.shape[0])
+    for i in range(BEC.shape[0] - 1, -1, -1):
+        A = np.delete(BEC, i, 0)
+        if A.shape[0] > 0:
+            res = linprog(-BEC[i], A_ub=A, b_ub=b[:A.shape[0]], bounds=bounds)
+            if res.fun <= 0 and not res.status:
+                BEC = A
+    return BEC
 
 
 def refineBEC(w, BEC):
     # remove trivial (all zero) constraints
     triv_i = []
-    for i in range(BEC.shape[0] - 1, -1, -1):
-        if all(BEC[i] == np.zeros(w.shape[0])):
+    z = np.zeros(w.shape[0])
+    for i in range(BEC.shape[0]):
+        if np.array_equal(BEC[i], z):
             triv_i.append(i)
     BEC = np.delete(BEC, triv_i, 0)
 
@@ -141,22 +165,13 @@ def refineBEC(w, BEC):
         BEC[i] = BEC[i] / np.linalg.norm(BEC[i])
 
     # remove duplicate BEC constraints
-    triv_i = set()
+    BEC_unique = set()
     for i in range(BEC.shape[0]):
-        for j in range(BEC.shape[0] - 1, i, -1):
-            if all(BEC[i] == BEC[j]):
-                triv_i.add(j)
-    BEC = np.delete(BEC, list(triv_i), 0)
+        BEC_unique.add(tuple(BEC[i].tolist()))
+    BEC = np.array(list(BEC_unique))
 
     # remove redundant half-space constraints with linear programming
     bounds = tuple([(None, None) for _ in range(w.shape[0])])
-    for i in range(BEC.shape[0] - 1, -1, -1):
-        c = -BEC[i]
-        A = np.delete(BEC, i, 0)
-        b = np.zeros(A.shape[0])
-        if A != [] and b != []:
-            res = linprog(c, A_ub=A, b_ub=b, bounds=bounds)
-            if res.fun <= 0 and not res.status:
-                BEC = A
+    BEC = removeLinRedundancies(BEC, bounds)
 
     return BEC

@@ -1,13 +1,9 @@
 import numpy as np
 import argparse
-from wrapper import Wrapper
-from agent import Agent
-from env import Grid
-from actions import ACTIONS
-from util_algo import *
-from SCOT import SCOT
 from tests import *
-import time
+from algorithms.scot import scot
+from algorithms.value_iteration import value_iteration
+from algorithms.max_likelihood_irl import max_likelihood_irl
 
 def test_mc(wrapper):
     ''' Evaluate Monte Carlo algorithm. '''
@@ -25,35 +21,57 @@ def test_mc(wrapper):
 
     return value_function_vi, value_function_mc
 
-def main(args):
-    if args.env == 'basic':
+def get_env():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-env', default='niekum') # choices=['basic', 'multiple', 'cooridor', 'paper_test', 'niekum']
+    args = parser.parse_args()
+    env = args.env
+
+    if env == 'basic':
         test = BasicGrid()
-    elif args.env == 'multiple':
+    elif env == 'multiple':
         test = MultipleFeatures()
-    elif args.env == "niekum":
+    elif env == "niekum":
         test = BrownNiekum()
-    elif args.env == "cooridor":
+    elif env == "cooridor":
         test = Cooridor()
-    elif args.env == "loop":
+    elif env == "loop":
         test = Loop()
+    elif env == "paper_test":
+        test = FromPaper()
     else:
         test = BrownNiekum()
 
-    print("{} grid environment:".format(test.__class__.__name__))
+    return test
+
+def main():
+    test = get_env() # default BrownNiekum()
     test.env.render()
 
-    if args.mc:
-        test_mc(test.wrapper)
-    else:
-        SCOT(test.env, None, test.env.weights)
+    np.random.seed(2)
+    trajs = scot(test.env, test.env.weights, verbose=True)
+
+    # student's inferred reward function from the trajectories from SCOT
+    r_weights = max_likelihood_irl(trajs, test.env, step_size=0.2, eps=1.0e-03, max_steps=1000, verbose=True)
+
+    values_MLIRL, policy_MLIRL = value_iteration(mdp=test.env, r_weights=r_weights) # student's policy and value function under student's reward funct
+    values_MLIRL = value_iteration(mdp=test.env, policy=policy_MLIRL) # value of student's policy under teacher's reward funct (true)
+    values_opt, policy_opt = value_iteration(mdp=test.env) # optimal value and policy under teacher's reward funct (true)
+    policy_similarity = np.sum(policy_MLIRL == policy_opt)/policy_MLIRL.shape[0]
+
+    print("Policy similarity: {}".format(policy_similarity))
+
+    # FOR NOW, THE START STATE DISTRIBUTION START_DIST DOES NOT HAVE AN ELEMENT FOR THE STATE nS
+    total_value_opt = np.dot(test.env.start_dist, values_opt)
+    print("Optimal expected value: {}".format(total_value_opt))
+
+    total_value_MLIRL = np.dot(test.env.start_dist, values_MLIRL)
+    print("Max Likelihood IRL expected value: {}".format(total_value_MLIRL))
+
+    value_gain_MLIRL = total_value_MLIRL/total_value_opt
+    print("Value gain of Max Likelihood IRL: {}".format(value_gain_MLIRL))
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-env', choices=['basic', 'multiple', 'niekum'], default='niekum')
-    parser.add_argument('-mc', action='store_true')
-    args = parser.parse_args()
-
-    start = time.time()
-    main(args)
-    end = time.time()
-    print('Total run time: {}'.format(end - start))
+    main()
+    
