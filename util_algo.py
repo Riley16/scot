@@ -42,10 +42,10 @@ def value_iteration(mdp, policy=None, r_weights=None, tol=1e-3, verbose=False):
                 policy[s] = max([(mdp.reward(s, w=r_weights) + gamma * sum([mdp.P[s, a, succ] * value_function_old[succ] # * float(not mdp.is_terminal(s))
                                        for succ in range(nS)]), a) for a in range(nA)])[1]
 
-            value_function[s] = mdp.reward(s) + gamma * sum([mdp.P[s, int(policy[s]), succ] * value_function_old[succ] * float(not mdp.is_terminal(s))
+            value_function[s] = mdp.reward(s, w=r_weights) + gamma * sum([mdp.P[s, int(policy[s]), succ] * value_function_old[succ] * float(not mdp.is_terminal(s))
                                      for succ in range(nS)])
 
-        eps = max(np.absolute(value_function - value_function_old))]
+        eps = max(np.absolute(value_function - value_function_old))
 
     if verbose:
         print('VI iterations to convergence: %d' % k)
@@ -170,12 +170,13 @@ def maxLikelihoodIRL(D, mdp, step_size = 0.01, eps=1e-02, max_steps=float("inf")
         mu, mu_sa = get_feature_counts(mdp, policy, tol=1.0e-03)
 
         # get likelihood gradient
-        grad = np.sum(np.array([(mu_sa[s, a] - np.sum(np.array([likelihoods[s, b]*mu_sa[s, b] for b in range(mdp.nA)]), axis=0))
+        grad = beta*np.sum(np.array([(mu_sa[s, a] - np.sum(np.array([likelihoods[s, b]*mu_sa[s, b] for b in range(mdp.nA)]), axis=0))
                                 for s, a in sa_traj]), axis=0)
 
         # perform gradient ascent step, use step size schedule of gradient ascent iterations
         r_weights_old = np.copy(r_weights)
-        r_weights += step_size/iters*grad
+        # L2_reg_factor = 0.001
+        r_weights += step_size/iters*grad  #- L2_reg_factor * r_weights
 
         # normalize r_weights to constrain L2 norm and force a unique reward weight vector
         r_weights /= np.linalg.norm(r_weights, ord=2)
@@ -187,5 +188,3 @@ def maxLikelihoodIRL(D, mdp, step_size = 0.01, eps=1e-02, max_steps=float("inf")
     if verbose:
         print("MLIRL iterations: {}".format(iters))
     return r_weights
-
-

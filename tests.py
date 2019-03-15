@@ -190,7 +190,6 @@ class BrownNiekum(object):
         #                 noise=0.0, start_corner=False)
 
         # random feature assignments for ten features, random reward weights
-        self.env = Grid(6, 6, 0.9, gen_features="random", n_features=25, weights="random",
         # self.env = Grid(2, 2, 0.9, gen_features="random", n_features=15, weights="random",
         #                 noise=0.0, start_corner=False)
 
@@ -208,5 +207,4 @@ class BrownNiekum(object):
 
     def init_policy(self):
         _, policy = value_iteration(self.env)
-        #print('Policy from VI: {}'.format(policy))
         return policy
