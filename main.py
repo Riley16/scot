@@ -53,7 +53,6 @@ def main():
     # for i in range(50, 100):
     #     np.random.seed(i)
     #     test = get_env()  # default BrownNiekum()
-    #     # test.env.render()
     #     print("i")
     #     print(i)
     #     trajs = scot(test.env, test.env.weights, seed=i+1, verbose=False)

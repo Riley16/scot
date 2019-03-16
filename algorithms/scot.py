@@ -44,15 +44,15 @@ def scot(mdp, w, s_start=None, m=None, H=None, seed=None, verbose=False):
     BEC = np.empty((mdp.nS*mdp.nA, w.shape[0]))
 
     # compute BEC for teacher policy
-    for a in range(mdp.nA):
-        BEC[a*mdp.nS:(a+1)*mdp.nS] = mu - mu_sa[:, a]
-    # BEC = np.empty((mdp.nS*(mdp.nA-1), w.shape[0]))
-    # i = 0
-    # for s in range(mdp.nS):
-    #     for a in range(mdp.nA):
-    #         if a != teacher_pol_det[s]:
-    #             BEC[i] = mu[s] - mu_sa[s, a]
-    #             i += 1
+    # for a in range(mdp.nA):
+    #     BEC[a*mdp.nS:(a+1)*mdp.nS] = mu - mu_sa[:, a]
+    BEC = np.empty((mdp.nS*(mdp.nA-1), w.shape[0]))
+    i = 0
+    for s in range(mdp.nS):
+        for a in range(mdp.nA):
+            if a != teacher_pol_det[s]:
+                BEC[i] = mu[s] - mu_sa[s, a]
+                i += 1
 
     # remove trivial, duplicate, and redundant half-space constraints
     BEC = refineBEC(w, BEC)
@@ -145,8 +145,8 @@ def compute_traj_BEC(traj, mu, mu_sa, mdp, w):
         # COULD REMOVE REDUNDANT SA-PAIRS HERE WITH A SET OF (S, A, R, S_NEW) TUPLES
         (s, a, r, s_new) = traj[i]
         for b in range(mdp.nA):
-            # if b != a:
-            BEC_traj_np[i * mdp.nA + b] = mu[s] - mu_sa[s, b]
+            if b != a:
+                BEC_traj_np[i * mdp.nA + b] = mu[s] - mu_sa[s, b]
             # if b == a:
             #     print(mu[s] - mu_sa[s, b])
 
