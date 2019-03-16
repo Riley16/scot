@@ -86,7 +86,7 @@ def baseline(mdp, s_start, max_demonstrations=50):
                 a lists of (s, a, r, s') experience tuples
     '''
     # choose random number of demonstrations
-    num_demonstrations = random.randint(1, max_demonstations)
+    num_demonstrations = random.randint(1, max_demonstrations)
 
     # loop through and generate those random demonstrations
     D = []

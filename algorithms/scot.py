@@ -5,10 +5,9 @@ from wrapper import Wrapper
 from algorithms.value_iteration import value_iteration
 from util import det2stoch_policy, get_feature_counts
 
-np.random.seed(2)
 
 
-def scot(mdp, w, s_start=None, m=None, H=None, verbose=False):
+def scot(mdp, w, s_start=None, m=None, H=None, seed=None, verbose=False):
     """
     Implements the Set Cover Optimal Teaching (SCOT) algorithm from
     "Machine Teaching for Inverse Reinforcement Learning:
@@ -27,11 +26,15 @@ def scot(mdp, w, s_start=None, m=None, H=None, verbose=False):
         D: list of maximally informative machine teaching trajectories
             represented as lists of (s, a, r, s') experience tuples
     """
+    if seed is not None:
+        np.random.seed(seed)
+    else:
+        np.random.seed(2)
 
     # compute optimal policy pi_opt
-    _, teacher_pol = value_iteration(mdp)  # using variation of VI code from HW1
+    _, teacher_pol_det = value_iteration(mdp)  # using variation of VI code from HW1
     # convert teacher policy to stochastic policy
-    teacher_pol = det2stoch_policy(teacher_pol, mdp.nS, mdp.nA)
+    teacher_pol = det2stoch_policy(teacher_pol_det, mdp.nS, mdp.nA)
 
     # compute expected feature counts mu[s][a] under optimal policy
     mu, mu_sa = get_feature_counts(mdp, teacher_pol)
@@ -43,6 +46,13 @@ def scot(mdp, w, s_start=None, m=None, H=None, verbose=False):
     # compute BEC for teacher policy
     for a in range(mdp.nA):
         BEC[a*mdp.nS:(a+1)*mdp.nS] = mu - mu_sa[:, a]
+    # BEC = np.empty((mdp.nS*(mdp.nA-1), w.shape[0]))
+    # i = 0
+    # for s in range(mdp.nS):
+    #     for a in range(mdp.nA):
+    #         if a != teacher_pol_det[s]:
+    #             BEC[i] = mu[s] - mu_sa[s, a]
+    #             i += 1
 
     # remove trivial, duplicate, and redundant half-space constraints
     BEC = refineBEC(w, BEC)
@@ -69,6 +79,8 @@ def scot(mdp, w, s_start=None, m=None, H=None, verbose=False):
 
     # sample demonstration trajectories from each starting state (either from each state with non-zero probability mass
     # in the start state distribution of the MDP or a given set of start states
+    # for s in range(mdp.nS):
+    #     demo_trajs += wrapper.eval_episodes(m, s, horizon=H)[1]
     if s_start is None:
         for s in range(mdp.nS):
             if mdp.start_dist[s] > 0.0:
@@ -89,6 +101,8 @@ def scot(mdp, w, s_start=None, m=None, H=None, verbose=False):
     C = set()
 
     U_sub_C = U - C
+    print("number of BEC constraints before set cover")
+    print(len(U))
 
     # greedy set cover algorithm
     """
@@ -99,7 +113,7 @@ def scot(mdp, w, s_start=None, m=None, H=None, verbose=False):
     for traj in demo_trajs:
         BECs_trajs.append(compute_traj_BEC(traj, mu, mu_sa, mdp, w))
 
-    while len(U_sub_C) > 0:
+    while len(U_sub_C) > 0 and len(BECs_trajs) > 0:
         t_list = []  # collects the cardinality of the intersection between BEC(traj|pi*) and U \ C
         BEC_list = []
         for BEC_traj in BECs_trajs:
@@ -112,6 +126,10 @@ def scot(mdp, w, s_start=None, m=None, H=None, verbose=False):
         D.append(t_greedy)
         C = C.union(BEC_list[t_greedy_index])
         U_sub_C = U - C
+        if len(BECs_trajs) == 0:
+            print("BEC_trajs empty")
+            print(len(U_sub_C))
+            print(U_sub_C)
 
     if verbose:
         print("trajectories", D)
@@ -124,10 +142,13 @@ def compute_traj_BEC(traj, mu, mu_sa, mdp, w):
     # compute BEC of trajectory as numpy array
     BEC_traj_np = np.zeros((mdp.nA * len(traj), w.shape[0]), dtype=float)
     for i in range(len(traj)):
+        # COULD REMOVE REDUNDANT SA-PAIRS HERE WITH A SET OF (S, A, R, S_NEW) TUPLES
         (s, a, r, s_new) = traj[i]
         for b in range(mdp.nA):
-            if b != a:
-                BEC_traj_np[i * mdp.nA + b] = mu[s] - mu_sa[s, b]
+            # if b != a:
+            BEC_traj_np[i * mdp.nA + b] = mu[s] - mu_sa[s, b]
+            # if b == a:
+            #     print(mu[s] - mu_sa[s, b])
 
     # normalize and remove trivial and redundant constraints from BEC of trajectory
     BEC_traj_np = refineBEC(w, BEC_traj_np)

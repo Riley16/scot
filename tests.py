@@ -204,7 +204,7 @@ class BrownNiekum(object):
 
         # tests of explicit arbitrary feature inputs on a state-by-state basis
         self.env = Grid(9, 9, 0.9, gen_features="random", n_features=8, weights="random",
-                        noise=0.0, start_corner=False)
+                        noise=0.0, start_corner=False, verbose=False)
 
         self.policy = self.init_policy()
         self.agent = Agent(self.policy, self.env.nS, self.env.nA)
@@ -212,6 +212,6 @@ class BrownNiekum(object):
 
     def init_policy(self):
         _, policy = value_iteration(self.env)
-        print('Policy from VI: {}'.format(policy))
+        # print('Policy from VI: {}'.format(policy))
         policy = det2stoch_policy(policy, self.env.nS, self.env.nA)
         return policy
