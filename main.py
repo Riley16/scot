@@ -44,13 +44,20 @@ def get_env():
 
     return test
 
+
 def main():
-    test = get_env() # default BrownNiekum()
+    seed = 2
+    np.random.seed(seed)
+    test = get_env()  # default BrownNiekum()
     test.env.render()
+    # for i in range(50, 100):
+    #     np.random.seed(i)
+    #     test = get_env()  # default BrownNiekum()
+    #     print("i")
+    #     print(i)
+    #     trajs = scot(test.env, test.env.weights, seed=i+1, verbose=False)
 
-    np.random.seed(2)
-    trajs = scot(test.env, test.env.weights, verbose=True)
-
+    trajs = scot(test.env, test.env.weights, seed=seed, verbose=False)
     # student's inferred reward function from the trajectories from SCOT
     r_weights = max_likelihood_irl(trajs, test.env, step_size=0.2, eps=1.0e-03, max_steps=1000, verbose=True)
 

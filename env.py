@@ -8,7 +8,7 @@ class Grid(object):
     def __init__(self, height:int, width:int, gamma:float, white_r:float=None,
                 features_sq:List[Dict]=None, gen_features:Union[List[List], Any]=None, n_features:int=None,
                 noise:float=0.0, weights=None,
-                start_corner=True, start_dist=None, end_pos:Tuple=None, one_hot=False):
+                start_corner=True, start_dist=None, end_pos:Tuple=None, one_hot=False, verbose=True):
         '''
         Initialize Grid environment
 
@@ -77,7 +77,8 @@ class Grid(object):
 
                 self.board = np.array([[self.reward(self.grid_to_state((h, w)))
                                         for w in range(width)] for h in range(height)], dtype=np.float32)
-                print(self.board)
+                if verbose == True:
+                    print(self.board)
             else:
                 self.s_features = [np.array(gen_features[s]) for s in range(self.nS)]
             self.board = np.array([[self.reward(self.grid_to_state((h, w)))
