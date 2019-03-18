@@ -193,6 +193,7 @@ def temporal_difference(wrapper, step_size=0.1, reset=True, eps=1e-3):
 
 if __name__ == '__main__':
     from tests import BrownNiekum
+    from algorithms.value_iteration import value_iteration
     test = BrownNiekum()
 
     value_function_opt, policy = value_iteration(test.env)

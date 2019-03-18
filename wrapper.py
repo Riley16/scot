@@ -48,5 +48,5 @@ class Wrapper(object):
 
     def sample(self, state):
         a = self.agent.get_action(state)
-        s, r, done = self.env.step(s, a)
+        s, r, done = self.env.step(state, a)
         return a, r, s, done
