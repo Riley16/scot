@@ -145,7 +145,7 @@ def first_visit_monte_carlo(wrapper, n_eps:int, eps_len:int):
 @rename('Temporal Difference learning')
 def temporal_difference(wrapper, n_samp, step_size=0.1):
     '''
-    Learn optimal value function given an MDP environment with Temporal Difference learning
+    Learn the value function for a given MDP environment and policy with Temporal Difference learning
 
     Parameters:
     ----------
@@ -156,7 +156,7 @@ def temporal_difference(wrapper, n_samp, step_size=0.1):
 
     Returns:
     -------
-    V_pi:   optimal value function
+    V_pi:   value function of the policy
     '''
     env = wrapper.env
     agent = wrapper.agent
@@ -164,12 +164,14 @@ def temporal_difference(wrapper, n_samp, step_size=0.1):
     nS = env.nS
     gamma = env.gamma
     V_pi = np.zeros(nS, dtype=np.float32)
+    env.reset()
     curr_state = env.start
 
     for _ in range(n_samp):
         # sample next tuple
         _, reward, next_state, done = wrapper.sample(curr_state)
-        new_val = V_pi[curr_state] + step_size * (reward + gamma * V_pi[next_state] - V_pi[curr_state])
+        V_pi[curr_state] = V_pi[curr_state] + step_size * (
+                env.reward(curr_state) + gamma * V_pi[next_state] - V_pi[curr_state])
 
         # reset environment if done
         if done:
@@ -178,8 +180,6 @@ def temporal_difference(wrapper, n_samp, step_size=0.1):
             curr_state = env.reset(s_start=None)
         else:
             curr_state = next_state
-
-        V_pi[curr_state] = new_val
 
     return V_pi
 
@@ -194,7 +194,7 @@ if __name__ == '__main__':
     policy_eval_func = temporal_difference
 
     if policy_eval_func == temporal_difference:
-        value_function_est = policy_eval_func(test.wrapper, **{'n_samp':100, 'step_size':0.1})
+        value_function_est = policy_eval_func(test.wrapper, **{'n_samp': 500, 'step_size':0.1})
     elif policy_eval_func == every_visit_monte_carlo:
         value_function_est = policy_eval_func(test.wrapper, **{'eps_len': 10, 'n_eps':50})
     elif policy_eval_func == first_visit_monte_carlo:
