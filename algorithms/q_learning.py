@@ -8,7 +8,7 @@ def rename(newname):
 
 
 @rename('Q-learning')
-def q_learning(wrapper, n_samp, step_size=0.1, epsilon=0.1):
+def q_learning(wrapper, n_samp, step_size=0.1, epsilon=0.1, horizon=None):
     '''
     Learn optimal value function given an MDP environment with Q-learning under a greedy epsilon policy
 
@@ -28,6 +28,10 @@ def q_learning(wrapper, n_samp, step_size=0.1, epsilon=0.1):
     env = wrapper.env
     agent = wrapper.agent
 
+    if horizon is None:
+        horizon = float("inf")
+    t = 0
+
     nS = env.nS
     nA = env.nA
     gamma = env.gamma
@@ -37,7 +41,7 @@ def q_learning(wrapper, n_samp, step_size=0.1, epsilon=0.1):
 
     for _ in range(n_samp):
         # sample next tuple
-
+        t += 1
         if np.random.random() > epsilon:
             a = np.argmax(Q[curr_state])
         else:
@@ -48,13 +52,14 @@ def q_learning(wrapper, n_samp, step_size=0.1, epsilon=0.1):
         Q[curr_state, a] = Q[curr_state, a] + step_size * (
                 env.reward(curr_state) + gamma * Q[next_state, np.argmax(Q[next_state])] - Q[curr_state, a])
 
-        # reset environment if done
-        if done:
+        # reset environment if done or if horizon has been reached
+        if done or t == horizon:
             end_reward = env.reward(next_state)
             # keep all state-action values the same for terminal states since there is no difference between actions
             # taken in terminal states
             Q[next_state] = Q[next_state] + step_size * (end_reward - Q[next_state])
             curr_state = env.reset(s_start=None)
+            t = 0
         else:
             curr_state = next_state
 
@@ -64,14 +69,15 @@ def q_learning(wrapper, n_samp, step_size=0.1, epsilon=0.1):
 
 
 if __name__ == '__main__':
+    np.random.seed(2)
     from tests import BrownNiekum
     from algorithms.value_iteration import value_iteration
 
     test = BrownNiekum()
-
+    test.env.render()
     value_function_opt, policy = value_iteration(test.env)
 
-    value_function_est, _, Q_policy = q_learning(test.wrapper, **{'n_samp': 1000, 'step_size': 0.1, 'epsilon': 0.1})
+    value_function_est, _, Q_policy = q_learning(test.wrapper, **{'n_samp': 50000, 'step_size': 0.1, 'epsilon': 0.1})
 
     # compare value functions
     print('Optimal policy: {}\nPolicy from Q-learning: {}'.format(policy, Q_policy))

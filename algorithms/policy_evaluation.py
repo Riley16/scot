@@ -143,16 +143,17 @@ def first_visit_monte_carlo(wrapper, n_eps:int, eps_len:int):
 
 
 @rename('Temporal Difference learning')
-def temporal_difference(wrapper, n_samp, step_size=0.1):
+def temporal_difference(wrapper, n_samp, step_size=0.1, horizon=None):
     '''
     Learn the value function for a given MDP environment and policy with Temporal Difference learning
 
     Parameters:
     ----------
     wrapper:    Wrapper object (see wrapper.py)
+    n_samp:     Number of samples to test
     step_size:  size of update
+    H:          horizon of trajectories
     reset:      whether to restart environment after reaching end state
-    eps:        convergence error
 
     Returns:
     -------
@@ -167,34 +168,48 @@ def temporal_difference(wrapper, n_samp, step_size=0.1):
     env.reset()
     curr_state = env.start
 
+    t = 0
+    traj = []
+
+    if horizon is None:
+        horizon = float("inf")
+
     for _ in range(n_samp):
+        t += 1
         # sample next tuple
         _, reward, next_state, done = wrapper.sample(curr_state)
         V_pi[curr_state] = V_pi[curr_state] + step_size * (
                 env.reward(curr_state) + gamma * V_pi[next_state] - V_pi[curr_state])
 
+        # traj.append((curr_state, reward, next_state, done))
+
         # reset environment if done
-        if done:
+        if done or t == horizon:
+            t = 0
             end_reward = env.reward(next_state)
             V_pi[next_state] = V_pi[next_state] + step_size * (end_reward - V_pi[next_state])
             curr_state = env.reset(s_start=None)
+            # print(traj)
+            traj = []
         else:
             curr_state = next_state
 
     return V_pi
 
 if __name__ == '__main__':
+    np.random.seed(2)
     from tests import BrownNiekum
     from algorithms.value_iteration import value_iteration
     test = BrownNiekum()
+    test.env.render()
 
-    value_function_opt, policy = value_iteration(test.env)
+    value_function_opt, policy = value_iteration(test.env, verbose=True)
     
     # change this to test other functions
     policy_eval_func = temporal_difference
 
     if policy_eval_func == temporal_difference:
-        value_function_est = policy_eval_func(test.wrapper, **{'n_samp': 500, 'step_size':0.1})
+        value_function_est = policy_eval_func(test.wrapper, **{'n_samp': 5000, 'step_size':0.1, 'horizon': 50})
     elif policy_eval_func == every_visit_monte_carlo:
         value_function_est = policy_eval_func(test.wrapper, **{'eps_len': 10, 'n_eps':50})
     elif policy_eval_func == first_visit_monte_carlo:
