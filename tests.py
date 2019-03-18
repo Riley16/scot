@@ -154,6 +154,22 @@ class FromPaper(object):
         return policy
 
 
+class Random(object):
+    ''' 9x9 Grid environment with one hot features. '''
+
+    def __init__(self):
+        self.env = Grid(3, 3, 0.9, white_r=-1, gen_features="random", noise=0.0, n_features=2, weights="random",
+                        start_corner=False)
+        self.policy = self.init_policy()
+        self.agent = Agent(self.policy, self.env.nS, self.env.nA)
+        self.wrapper = Wrapper(self.env, self.agent, log=True)
+
+    def init_policy(self):
+        _, policy = value_iteration(self.env)
+        print('Policy from VI: {}'.format(policy))
+        return policy
+
+
 class BrownNiekum(object):
     '''
     Brown and Niekum toy environment (2019)

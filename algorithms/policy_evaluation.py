@@ -184,21 +184,31 @@ def temporal_difference(wrapper, n_samp, step_size=0.1):
     return V_pi
 
 if __name__ == '__main__':
-    from tests import BrownNiekum
+    from tests import BrownNiekum, Random
     from algorithms.value_iteration import value_iteration
-    test = BrownNiekum()
+    test = Random()
 
     value_function_opt, policy = value_iteration(test.env)
     
     # change this to test other functions
-    policy_eval_func = temporal_difference
+    policy_eval_func = every_visit_monte_carlo
 
     if policy_eval_func == temporal_difference:
-        value_function_est = policy_eval_func(test.wrapper, **{'n_samp': 500, 'step_size':0.1})
+        n_samples =500000
+        step_size = 0.1
+        value_function_est = policy_eval_func(test.wrapper, **{'n_samp': n_samples, 'step_size':step_size})
+        print('Running {} with {} samples and step size {}'.format(policy_eval_func.__name__, n_samples, step_size))
     elif policy_eval_func == every_visit_monte_carlo:
-        value_function_est = policy_eval_func(test.wrapper, **{'eps_len': 10, 'n_eps':50})
+        eps_len = 500
+        n_eps = 50000
+        value_function_est = policy_eval_func(test.wrapper, **{'eps_len': eps_len, 'n_eps':n_eps})
+        print('Running {} with {} episodes of length {}'.format(policy_eval_func.__name__, n_eps, eps_len))
+
     elif policy_eval_func == first_visit_monte_carlo:
-        value_function_est = policy_eval_func(test.wrapper, **{'eps_len': 10, 'n_eps':50})
+        eps_len = 20
+        n_eps = 1000
+        value_function_est = policy_eval_func(test.wrapper, **{'eps_len': eps_len, 'n_eps':n_eps})
+        print('Running {} with {} episodes of length {}'.format(policy_eval_func.__name__, n_eps, eps_len))
 
     # compare value functions
     print('Optimal policy: {}'.format(policy))
