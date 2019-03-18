@@ -29,6 +29,7 @@ def every_visit_monte_carlo(wrapper, T:int=0, eps:float=1e-2):
     # iterate until epsilon convergence
     iters = 1
     while True:
+        print(iters)
         # sample an episode
         _, traj = wrapper.eval_episodes(1, s_start=None, horizon=T)
         traj = traj[0] # each step is (s, a, r, s')

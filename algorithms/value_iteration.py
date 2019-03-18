@@ -50,3 +50,10 @@ def value_iteration(mdp, policy=None, r_weights=None, tol=1e-3, verbose=False):
         print('VI iterations to convergence: %d' % k)
         
     return value_function, policy
+
+if __name__ == '__main__':
+    from tests import BrownNiekum
+    test = BrownNiekum()
+    value_function, policy = value_iteration(test.env, verbose=True)
+    print('Value function: {}'.format(value_function))
+    print('Policy: {}'.format(policy))
