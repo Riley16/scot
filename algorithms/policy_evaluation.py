@@ -1,7 +1,7 @@
 ''' Contains policy evaluation functions: Every/First visit Monte Carlo, Temporal Difference learning '''
 import numpy as np
 
-def every_visit_monte_carlo(wrapper, T:int=0, eps:float=1e-2):
+def every_visit_monte_carlo(wrapper, T:int=1, eps:float=1e-2):
     """
     Learn value function of a policy by using n-th visit Monte Carlo sampling.
 
@@ -24,12 +24,11 @@ def every_visit_monte_carlo(wrapper, T:int=0, eps:float=1e-2):
     V_pi_old = np.zeros(nS)             # initialize value function
     iters = 0                           # track iterations
 
-    assert T == None or T > 0
+    assert T > 0
 
     # iterate until epsilon convergence
     iters = 1
     while True:
-        print(iters)
         # sample an episode
         _, traj = wrapper.eval_episodes(1, s_start=None, horizon=T)
         traj = traj[0] # each step is (s, a, r, s')
@@ -71,7 +70,7 @@ def every_visit_monte_carlo(wrapper, T:int=0, eps:float=1e-2):
 
     return V_pi_new, iters
 
-def first_visit_monte_carlo(wrapper, T:int=None, eps:float=1e-2):
+def first_visit_monte_carlo(wrapper, T:int=1, eps:float=1e-2):
     """
     Learn value function of a policy by using n-th visit Monte Carlo sampling.
 
@@ -94,7 +93,7 @@ def first_visit_monte_carlo(wrapper, T:int=None, eps:float=1e-2):
     V_pi_old = np.zeros(nS)             # initialize value function
     iters = 0                           # track iterations
 
-    assert T == None or T > 0
+    assert T > 0
 
     # iterate until epsilon convergence
     iters = 1
@@ -191,4 +190,19 @@ def temporal_difference(wrapper, step_size=0.1, reset=True, eps=1e-3):
         iters += 1
 
     return V_pi, iters
+
+if __name__ == '__main__':
+    from tests import BrownNiekum
+    test = BrownNiekum()
+
+    value_function_opt, policy = value_iteration(test.env)
+    
+    # value_function_est, _ = every_visit_monte_carlo(test.wrapper, T=10, eps=1e-5)
+    # value_function_est, _ = first_visit_monte_carlo(test.wrapper, T=10, eps=1e-5)
+    value_function_est, _ = temporal_difference(test.wrapper, step_size=0.1, reset=True, eps=1e-5)
+
+    # compare value functions
+    print('Optimal policy: {}'.format(policy))
+    print('Value function from VI: {}'.format(value_function_opt))
+    print('Value function from MC: {}'.format(value_function_est))
     

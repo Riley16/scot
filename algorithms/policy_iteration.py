@@ -76,7 +76,6 @@ def policy_iteration(env, agent, policy_eval_func, kwargs={}):
         value_function, _ = policy_eval_func(wrapper, **kwargs)
         new_policy = policy_improvement(env, value_function, old_policy)
 
-        print(iters)
         # check to end policy iteration
         if np.all(new_policy - old_policy) == 0:
             break
