@@ -31,7 +31,7 @@ def policy_improvement(env, value_func, old_policy):
         q_values = np.zeros((nA))
         for a in range(nA):
             #- Compute expected reward, assuming stochastic env
-            q_sa = 0
+            q_sa = value_func[s]
             for s_, p in enumerate(P[s, a]):
                 reward = env.reward(s_)
                 q_sa += p * (reward + gamma * value_func[s_])
@@ -52,9 +52,9 @@ def policy_iteration(env, agent, policy_eval_func, kwargs={}):
     policy_eval_func:   function for policy evaluation
     kwargs:             dictionary of optional arguments for policy_eval_func
 
-    first_visit_monte_carlo: kwargs={'T':, 'eps':}
-    every_visit_monte_carlo: kwargs={'T':, 'eps':}
-    temporal_difference: kwargs={'step_size':, 'reset':, 'eps':}
+    first_visit_monte_carlo: kwargs={'n_eps':, 'eps_len':}
+    every_visit_monte_carlo: kwargs={'n_eps':, 'eps_len':}
+    temporal_difference: kwargs={'n_samp':, 'step_size':}
 
     Returns:
     ----------
@@ -73,11 +73,11 @@ def policy_iteration(env, agent, policy_eval_func, kwargs={}):
 
     iters = 1
     while True:
-        value_function, _ = policy_eval_func(wrapper, **kwargs)
+        value_function = policy_eval_func(wrapper, **kwargs)
         new_policy = policy_improvement(env, value_function, old_policy)
 
         # check to end policy iteration
-        if np.all(new_policy - old_policy) == 0:
+        if np.amax(np.abs(new_policy - old_policy)) == 0:
             break
         
         # prepare for next iteration
@@ -96,8 +96,8 @@ if __name__ == '__main__':
     test = BrownNiekum()
 
     # value_function, policy = policy_iteration(
-    #     test.env, test.agent, first_visit_monte_carlo, kwargs={'T': None, 'eps': 1e-3})
+    #     test.env, test.agent, first_visit_monte_carlo, kwargs={'n_eps': 50, 'eps_len': 10})
     value_function, policy = policy_iteration(
-        test.env, test.agent, every_visit_monte_carlo, kwargs={'T': 10, 'eps':1e-3})
+        test.env, test.agent, every_visit_monte_carlo, kwargs={'n_eps': 50, 'eps_len': 10})
     # value_function, policy = policy_iteration(
-    #     test.env, test.agent, temporal_difference, kwargs={'step_size': 0.1, 'reset': True, 'eps':1e-3})
+    #     test.env, test.agent, temporal_difference, kwargs={'n_samp':1000', step_size': 0.1)

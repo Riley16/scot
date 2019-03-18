@@ -10,7 +10,7 @@ def rename(newname):
 
 
 @rename('Every-visit Monte Carlo')
-def every_visit_monte_carlo(wrapper, T:int=1, eps:float=1e-2):
+def every_visit_monte_carlo(wrapper, n_eps:int, eps_len:int):
     """
     Learn value function of a policy by using n-th visit Monte Carlo sampling.
 
@@ -31,15 +31,12 @@ def every_visit_monte_carlo(wrapper, T:int=1, eps:float=1e-2):
     N = np.zeros(nS)                    # track visits to each state
     G = np.zeros(nS, dtype=np.float32)  # track rewards for each state
     V_pi_old = np.zeros(nS)             # initialize value function
-    iters = 0                           # track iterations
 
-    assert T > 0
+    assert eps_len > 0
 
-    # iterate until epsilon convergence
-    iters = 1
-    while True:
+    for _ in range(eps_len):
         # sample an episode
-        _, traj = wrapper.eval_episodes(1, s_start=None, horizon=T)
+        _, traj = wrapper.eval_episodes(1, s_start=None, horizon=eps_len)
         traj = traj[0] # each step is (s, a, r, s')
 
         # add initial rewards to trajectory
@@ -68,20 +65,15 @@ def every_visit_monte_carlo(wrapper, T:int=1, eps:float=1e-2):
             N[s] += 1
             G[s] += g
             V_pi_new[s] = G[s] / N[s]
-    
-        # check for convergence
-        if np.max(np.abs(V_pi_new - V_pi_old)) < eps:
-            break
 
         # prepare next rollout
-        iters += 1
         V_pi_old = np.copy(V_pi_new)
 
-    return V_pi_new, iters
+    return V_pi_new
 
 
 @rename('First-visit Monte Carlo')
-def first_visit_monte_carlo(wrapper, T:int=1, eps:float=1e-2):
+def first_visit_monte_carlo(wrapper, n_eps:int, eps_len:int):
     """
     Learn value function of a policy by using n-th visit Monte Carlo sampling.
 
@@ -102,18 +94,15 @@ def first_visit_monte_carlo(wrapper, T:int=1, eps:float=1e-2):
     N = np.zeros(nS)                    # track visits to each state
     G = np.zeros(nS, dtype=np.float32)  # track rewards for each state
     V_pi_old = np.zeros(nS)             # initialize value function
-    iters = 0                           # track iterations
 
-    assert T > 0
+    assert eps_len > 0
 
-    # iterate until epsilon convergence
-    iters = 1
-    while True:
+    for _ in range(n_eps):
         # track visits to states
         first_visits = np.zeros((nS))
 
         # sample an episode
-        _, traj = wrapper.eval_episodes(1, s_start=None, horizon=T)
+        _, traj = wrapper.eval_episodes(1, s_start=None, horizon=eps_len)
         traj = traj[0] # each step is (s, a, r, s')
 
         # add initial rewards to trajectory
@@ -144,20 +133,17 @@ def first_visit_monte_carlo(wrapper, T:int=1, eps:float=1e-2):
                 N[s] += 1
                 G[s] += g
                 V_pi_new[s] = G[s] / N[s]
-    
-        # check for convergence
-        if np.max(np.abs(V_pi_new - V_pi_old)) < eps:
-            break
 
         # prepare next rollout
-        iters += 1
         V_pi_old = np.copy(V_pi_new)
 
-    return V_pi_new, iters
+    print(n_eps)
+
+    return V_pi_new
 
 
 @rename('Temporal Difference learning')
-def temporal_difference(wrapper, step_size=0.1, reset=True, eps=1e-3):
+def temporal_difference(wrapper, n_samp, step_size=0.1):
     '''
     Learn optimal value function given an MDP environment with Temporal Difference learning
 
@@ -180,30 +166,22 @@ def temporal_difference(wrapper, step_size=0.1, reset=True, eps=1e-3):
     V_pi = np.zeros(nS, dtype=np.float32)
     curr_state = env.start
 
-    # iterate until epsilon convergence
-    iters = 1
-    while True:
+    for _ in range(n_samp):
         # sample next tuple
-        action, reward, next_state, done = wrapper.sample(curr_state)
+        _, reward, next_state, done = wrapper.sample(curr_state)
         new_val = V_pi[curr_state] + step_size * (reward + gamma * V_pi[next_state] - V_pi[curr_state])
 
-        # epsilon convergence
-        if np.abs(new_val - V_pi[curr_state]) < eps:
-            break
-
-        # determine whether to break or reset to keep going
-        if done and not reset:
-            break
-        elif done and reset:
-            env.reset(s_start=None)
-            curr_state = env.start
+        # reset environment if done
+        if done:
+            end_reward = env.reward(next_state)
+            V_pi[next_state] = V_pi[next_state] + step_size * (end_reward - V_pi[next_state])
+            curr_state = env.reset(s_start=None)
         else:
-            # prepare for next iteration
-            V_pi[curr_state] = new_val
             curr_state = next_state
-            iters += 1
 
-    return V_pi, iters
+        V_pi[curr_state] = new_val
+
+    return V_pi
 
 if __name__ == '__main__':
     from tests import BrownNiekum
@@ -216,14 +194,11 @@ if __name__ == '__main__':
     policy_eval_func = temporal_difference
 
     if policy_eval_func == temporal_difference:
-        value_function_est, iters = policy_eval_func(test.wrapper, **{'step_size':0.75, 'reset':True, 'eps':1e-5})
-        print('Iterations for {} for converge: {}'.format(policy_eval_func.__name__, iters))
+        value_function_est = policy_eval_func(test.wrapper, **{'n_samp':100, 'step_size':0.1})
     elif policy_eval_func == every_visit_monte_carlo:
-        value_function_est, iters = policy_eval_func(test.wrapper, **{'T': 10, 'eps':1e-5})
-        print('Iterations for {} for converge: {}'.format(policy_eval_func.__name__, iters))
+        value_function_est = policy_eval_func(test.wrapper, **{'eps_len': 10, 'n_eps':50})
     elif policy_eval_func == first_visit_monte_carlo:
-        value_function_est, iters = policy_eval_func(test.wrapper, **{'T': 10, 'eps':1e-5})
-        print('Iterations for {} for converge: {}'.format(policy_eval_func.__name__, iters))
+        value_function_est = policy_eval_func(test.wrapper, **{'eps_len': 10, 'n_eps':50})
 
     # compare value functions
     print('Optimal policy: {}'.format(policy))
