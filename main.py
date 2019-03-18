@@ -5,22 +5,6 @@ from algorithms.scot import scot
 from algorithms.value_iteration import value_iteration
 from algorithms.max_likelihood_irl import max_likelihood_irl
 
-def test_mc(wrapper):
-    ''' Evaluate Monte Carlo algorithm. '''
-
-    # generate optimal policy / value function from value iteration
-    value_function_vi, policy = value_iteration(wrapper.env)
-    
-    # evaluate optimal policy with monte carlo
-    value_function_mc = monte_carlo(wrapper, n=-1, eps=1e-5)
-
-    # compare value functions
-    print('Optimal policy: {}'.format(policy))
-    print('Value function from VI: {}'.format(value_function_vi))
-    print('Value function from MC: {}'.format(value_function_mc))
-
-    return value_function_vi, value_function_mc
-
 def get_env():
     parser = argparse.ArgumentParser()
     parser.add_argument('-env', default='niekum') # choices=['basic', 'multiple', 'cooridor', 'paper_test', 'niekum']

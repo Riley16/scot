@@ -1,7 +1,16 @@
 ''' Contains policy evaluation functions: Every/First visit Monte Carlo, Temporal Difference learning '''
 import numpy as np
 
-def every_visit_monte_carlo(wrapper, T:int=0, eps:float=1e-2):
+
+def rename(newname):
+    def decorator(f):
+        f.__name__ = newname
+        return f
+    return decorator
+
+
+@rename('Every-visit Monte Carlo')
+def every_visit_monte_carlo(wrapper, T:int=1, eps:float=1e-2):
     """
     Learn value function of a policy by using n-th visit Monte Carlo sampling.
 
@@ -24,7 +33,7 @@ def every_visit_monte_carlo(wrapper, T:int=0, eps:float=1e-2):
     V_pi_old = np.zeros(nS)             # initialize value function
     iters = 0                           # track iterations
 
-    assert T == None or T > 0
+    assert T > 0
 
     # iterate until epsilon convergence
     iters = 1
@@ -70,7 +79,9 @@ def every_visit_monte_carlo(wrapper, T:int=0, eps:float=1e-2):
 
     return V_pi_new, iters
 
-def first_visit_monte_carlo(wrapper, T:int=None, eps:float=1e-2):
+
+@rename('First-visit Monte Carlo')
+def first_visit_monte_carlo(wrapper, T:int=1, eps:float=1e-2):
     """
     Learn value function of a policy by using n-th visit Monte Carlo sampling.
 
@@ -93,7 +104,7 @@ def first_visit_monte_carlo(wrapper, T:int=None, eps:float=1e-2):
     V_pi_old = np.zeros(nS)             # initialize value function
     iters = 0                           # track iterations
 
-    assert T == None or T > 0
+    assert T > 0
 
     # iterate until epsilon convergence
     iters = 1
@@ -144,6 +155,8 @@ def first_visit_monte_carlo(wrapper, T:int=None, eps:float=1e-2):
 
     return V_pi_new, iters
 
+
+@rename('Temporal Difference learning')
 def temporal_difference(wrapper, step_size=0.1, reset=True, eps=1e-3):
     '''
     Learn optimal value function given an MDP environment with Temporal Difference learning
@@ -170,24 +183,50 @@ def temporal_difference(wrapper, step_size=0.1, reset=True, eps=1e-3):
     # iterate until epsilon convergence
     iters = 1
     while True:
-        # sample next tuplle
+        # sample next tuple
         action, reward, next_state, done = wrapper.sample(curr_state)
         new_val = V_pi[curr_state] + step_size * (reward + gamma * V_pi[next_state] - V_pi[curr_state])
+
+        # epsilon convergence
+        if np.abs(new_val - V_pi[curr_state]) < eps:
+            break
 
         # determine whether to break or reset to keep going
         if done and not reset:
             break
         elif done and reset:
             env.reset(s_start=None)
-        
-        # epsilon convergence
-        if np.abs(new_val - V_pi[curr_state]) < eps:
-            break
-
-        # prepare for next iteration
-        V_pi[curr_state] = new_val
-        curr_state = next_state
-        iters += 1
+            curr_state = env.start
+        else:
+            # prepare for next iteration
+            V_pi[curr_state] = new_val
+            curr_state = next_state
+            iters += 1
 
     return V_pi, iters
+
+if __name__ == '__main__':
+    from tests import BrownNiekum
+    from algorithms.value_iteration import value_iteration
+    test = BrownNiekum()
+
+    value_function_opt, policy = value_iteration(test.env)
+    
+    # change this to test other functions
+    policy_eval_func = temporal_difference
+
+    if policy_eval_func == temporal_difference:
+        value_function_est, iters = policy_eval_func(test.wrapper, **{'step_size':0.75, 'reset':True, 'eps':1e-5})
+        print('Iterations for {} for converge: {}'.format(policy_eval_func.__name__, iters))
+    elif policy_eval_func == every_visit_monte_carlo:
+        value_function_est, iters = policy_eval_func(test.wrapper, **{'T': 10, 'eps':1e-5})
+        print('Iterations for {} for converge: {}'.format(policy_eval_func.__name__, iters))
+    elif policy_eval_func == first_visit_monte_carlo:
+        value_function_est, iters = policy_eval_func(test.wrapper, **{'T': 10, 'eps':1e-5})
+        print('Iterations for {} for converge: {}'.format(policy_eval_func.__name__, iters))
+
+    # compare value functions
+    print('Optimal policy: {}'.format(policy))
+    print('Optimal value function from Value Iteration: {}'.format(value_function_opt))
+    print('Estimated value function from {}: {}'.format(policy_eval_func.__name__, value_function_est))
     

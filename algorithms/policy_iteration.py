@@ -1,11 +1,11 @@
 ''' Contains functions for policy iteration and policy improvement. '''
 import numpy as np
 from wrapper import Wrapper
-from tests import BrownNiekum
 from algorithms.policy_evaluation import first_visit_monte_carlo, \
     every_visit_monte_carlo, temporal_difference
+from util import det2stoch_policy
 
-def policy_improvement(env, value_from_policy, old_policy):
+def policy_improvement(env, value_func, old_policy):
     '''Given the value function from policy improve the policy.
 
     Parameters
@@ -20,27 +20,24 @@ def policy_improvement(env, value_from_policy, old_policy):
     '''
 
     new_policy = np.zeros_like(old_policy)
+    gamma = env.gamma
     nS = env.nS
     nA = env.nA
     P = env.P
 
+    #- Calculate argmax_a Q(s, a) for all s
     for s in range(nS):
-        # calculate Q value for taking all actions to see if currently policy is correct
-        q_values = []
+        #- Accumulate Q(s, a) for all a
+        q_values = np.zeros((nA))
         for a in range(nA):
-            action_value = 0
-            for prob_of_trans in P[s][a]:
-                # get next state
-                grid_position = env.state_to_grid(s)
-                grid_move = env.actions_to_grid[a]
-                new_grid_position = grid_position + grid_move
-                next_s = env.grid_to_state(new_grid_position)
-                # get reward
-                reward = env.reward(next_s)
-                terminal = env.is_terminal(next_s)
-                action_value += (prob_of_trans * (reward + gamma * value_from_policy[next_s]))
-            q_values.append(action_value)
-        new_policy[s] = q_values.index(max(q_values)) # find the action corresponding to largest Q
+            #- Compute expected reward, assuming stochastic env
+            q_sa = 0
+            for s_, p in enumerate(P[s, a]):
+                reward = env.reward(s_)
+                q_sa += p * (reward + gamma * value_func[s_])
+            q_values[a] = q_sa
+        #- Find action that maximizes Q value
+        new_policy[s] = np.argmax(q_values)
 
     return new_policy
 
@@ -72,33 +69,35 @@ def policy_iteration(env, agent, policy_eval_func, kwargs={}):
     new_policy = np.copy(old_policy)
 
     wrapper = Wrapper(env, agent, log=True)
-    wrapper.agent.set_policy(old_policy)
+    wrapper.agent.set_policy(det2stoch_policy(old_policy, nS, nA))
 
     iters = 1
     while True:
         value_function, _ = policy_eval_func(wrapper, **kwargs)
-        new_policy = policy_improvement(P, nS, nA, value_function, old_policy, gamma)
+        new_policy = policy_improvement(env, value_function, old_policy)
 
         # check to end policy iteration
-        if new_policy - old_policy == 0:
+        if np.all(new_policy - old_policy) == 0:
             break
         
         # prepare for next iteration
         old_policy = np.copy(new_policy)
-        wrapper.agent.set_policy(old_policy)
+        wrapper.agent.set_policy(det2stoch_policy(old_policy, nS, nA))
         iters += 1
 
-    print('Policy iteration converged in {} iterations.'.format(i))
+    print('Policy iteration converged in {} iterations.'.format(iters))
+    print('Policy: {}'.format(new_policy))
+    print('Value function: {}'.format(value_function))
 
-    return value_function, new_policy, i
+    return value_function, new_policy
 
 if __name__ == '__main__':
+    from tests import BrownNiekum
     test = BrownNiekum()
 
-    value_function, policy, i = policy_iteration(
-        test.env, test.agent, first_visit_monte_carlo, kwargs={'T': None, 'eps': 1e-3})
-    # value_function, policy, i = policy_iteration(
-    #     test.env, test.agent, every_visit_monte_carlo, kwargs={'T': None, 'eps':1e-3})
-    # value_function, policy, i = policy_iteration(
+    # value_function, policy = policy_iteration(
+    #     test.env, test.agent, first_visit_monte_carlo, kwargs={'T': None, 'eps': 1e-3})
+    value_function, policy = policy_iteration(
+        test.env, test.agent, every_visit_monte_carlo, kwargs={'T': 10, 'eps':1e-3})
+    # value_function, policy = policy_iteration(
     #     test.env, test.agent, temporal_difference, kwargs={'step_size': 0.1, 'reset': True, 'eps':1e-3})
-    print('Policy iteration converged in {} iterations.'.format(i))

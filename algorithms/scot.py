@@ -32,7 +32,7 @@ def scot(mdp, w, s_start=None, m=None, H=None, seed=None, verbose=False):
         np.random.seed(2)
 
     # compute optimal policy pi_opt
-    _, teacher_pol_det = value_iteration(mdp)  # using variation of VI code from HW1
+    _, teacher_pol_det = value_iteration(mdp)  # using variation of VI code from HW1)
     # convert teacher policy to stochastic policy
     teacher_pol = det2stoch_policy(teacher_pol_det, mdp.nS, mdp.nA)
 
