@@ -31,7 +31,7 @@ def policy_improvement(env, value_func, old_policy):
         q_values = np.zeros((nA))
         for a in range(nA):
             #- Compute expected reward, assuming stochastic env
-            q_sa = 0
+            q_sa = value_func[s]
             for s_, p in enumerate(P[s, a]):
                 reward = env.reward(s_)
                 q_sa += p * (reward + gamma * value_func[s_])
@@ -77,7 +77,7 @@ def policy_iteration(env, agent, policy_eval_func, kwargs={}):
         new_policy = policy_improvement(env, value_function, old_policy)
 
         # check to end policy iteration
-        if np.all(new_policy - old_policy) == 0:
+        if np.amax(np.abs(new_policy - old_policy)) == 0:
             break
         
         # prepare for next iteration
