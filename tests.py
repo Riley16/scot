@@ -154,6 +154,22 @@ class FromPaper(object):
         return policy
 
 
+class Random(object):
+    ''' 9x9 Grid environment with one hot features. '''
+
+    def __init__(self):
+        self.env = Grid(3, 3, 0.9, white_r=-1, gen_features="random", noise=0.0, n_features=2, weights="random",
+                        start_corner=False)
+        self.policy = self.init_policy()
+        self.agent = Agent(self.policy, self.env.nS, self.env.nA)
+        self.wrapper = Wrapper(self.env, self.agent, log=True)
+
+    def init_policy(self):
+        _, policy = value_iteration(self.env)
+        print('Policy from VI: {}'.format(policy))
+        return policy
+
+
 class BrownNiekum(object):
     '''
     Brown and Niekum toy environment (2019)
@@ -174,7 +190,7 @@ class BrownNiekum(object):
                 'reward': -10.0,
                 'squares': [[1, 1]]
             }]
-        self.env = Grid(2, 3, 0.9, white_r=-1, features_sq=features, noise=0.0, start_corner=False)
+        # self.env = Grid(2, 3, 0.9, white_r=-1, features_sq=features, noise=0.0, start_corner=False)
 
         # sanity checks for various grid environment setup methods with basic Brown and Niekum environment
 
@@ -201,10 +217,10 @@ class BrownNiekum(object):
         # basic test
         # self.env = Grid(2, 3, 0.9, gen_features=[[1, 0],[1, 0],[1, 0],[1, 0],[0, 1],[1, 0]], weights=np.array([-1, -10]),
         #                 noise=0.0, start_corner=False)
-
+        #
         # tests of explicit arbitrary feature inputs on a state-by-state basis
-        # self.env = Grid(9, 9, 0.9, gen_features="random", n_features=8, weights="random",
-        #                 noise=0.0, start_corner=False, verbose=False)
+        self.env = Grid(3, 3, 0.9, gen_features="random", n_features=3, weights="random",
+                        noise=0.0, start_corner=False, verbose=False)
 
         self.policy = self.init_policy()
         self.agent = Agent(self.policy, self.env.nS, self.env.nA)
