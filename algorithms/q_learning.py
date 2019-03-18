@@ -70,7 +70,7 @@ def q_learning(wrapper, n_samp, step_size=0.1, epsilon=0.1, horizon=None):
 
 if __name__ == '__main__':
     np.random.seed(2)
-    from tests import BrownNiekum
+    from tests import BrownNiekum, Random
     from algorithms.value_iteration import value_iteration
 
     test = BrownNiekum()
@@ -78,6 +78,7 @@ if __name__ == '__main__':
     value_function_opt, policy = value_iteration(test.env)
 
     value_function_est, _, Q_policy = q_learning(test.wrapper, **{'n_samp': 50000, 'step_size': 0.1, 'epsilon': 0.1})
+
 
     # compare value functions
     print('Optimal policy: {}\nPolicy from Q-learning: {}'.format(policy, Q_policy))
