@@ -75,7 +75,8 @@ def max_likelihood_irl(D, mdp, step_size = 0.01, eps=1e-02, max_steps=float("inf
 
         # convergence criterion
         delta = np.linalg.norm(r_weights - r_weights_old, 1)
-        print(delta)
+        if verbose:
+            print(delta)
 
     if verbose:
         print("MLIRL iterations: {}".format(iters))

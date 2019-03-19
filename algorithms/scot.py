@@ -101,8 +101,9 @@ def scot(mdp, w, s_start=None, m=None, H=None, seed=None, verbose=False):
     C = set()
 
     U_sub_C = U - C
-    print("number of BEC constraints before set cover")
-    print(len(U))
+    if verbose:
+        print("number of BEC constraints before set cover")
+        print(len(U))
 
     # greedy set cover algorithm
     """

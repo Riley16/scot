@@ -137,7 +137,7 @@ def first_visit_monte_carlo(wrapper, n_eps:int, eps_len:int):
         # prepare next rollout
         V_pi_old = np.copy(V_pi_new)
 
-    print(n_eps)
+    #print(n_eps)
 
     return V_pi_new
 
