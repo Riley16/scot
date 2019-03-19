@@ -206,7 +206,7 @@ if __name__ == '__main__':
     value_function_opt, policy = value_iteration(test.env, verbose=True)
     
     # change this to test other functions
-    policy_eval_func = every_visit_monte_carlo
+    policy_eval_func = temporal_difference
 
     if policy_eval_func == temporal_difference:
         n_samples =500000

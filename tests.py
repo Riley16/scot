@@ -158,7 +158,7 @@ class Random(object):
     ''' 9x9 Grid environment with one hot features. '''
 
     def __init__(self):
-        self.env = Grid(5, 5, 0.9, white_r=-1, gen_features="random", noise=0.0, n_features=4, weights="random",
+        self.env = Grid(5, 5, 0.9, white_r=-1, gen_features="random", noise=0.0, n_features=3, weights="random",
                         start_corner=False)
         self.policy = self.init_policy()
         self.agent = Agent(self.policy, self.env.nS, self.env.nA)
