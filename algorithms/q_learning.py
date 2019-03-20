@@ -38,7 +38,7 @@ def q_learning(wrapper, n_samp, step_size=0.1, epsilon=0.1, horizon=None, traj_l
     Q = np.zeros((nS, nA), dtype=np.float32)
     env.reset()
     curr_state = env.start
-    num_trajs = 1
+    num_trajs = 0
     for _ in range(n_samp):
         # sample next tuple
         t += 1

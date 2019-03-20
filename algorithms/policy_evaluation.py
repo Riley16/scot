@@ -31,6 +31,7 @@ def every_visit_monte_carlo(wrapper, n_eps:int, eps_len:int):
     N = np.zeros(nS)                    # track visits to each state
     G = np.zeros(nS, dtype=np.float32)  # track rewards for each state
     V_pi_old = np.zeros(nS)             # initialize value function
+    V_pi_new = np.zeros(nS)
 
     assert eps_len > 0
 
@@ -94,7 +95,7 @@ def first_visit_monte_carlo(wrapper, n_eps:int, eps_len:int):
     N = np.zeros(nS)                    # track visits to each state
     G = np.zeros(nS, dtype=np.float32)  # track rewards for each state
     V_pi_old = np.zeros(nS)             # initialize value function
-
+    V_pi_new = np.zeros(nS)
     assert eps_len > 0
 
     for _ in range(n_eps):
