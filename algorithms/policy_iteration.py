@@ -95,9 +95,9 @@ if __name__ == '__main__':
     from tests import BrownNiekum
     test = BrownNiekum()
 
-    # value_function, policy = policy_iteration(
+    #value_function, policy = policy_iteration(
     #     test.env, test.agent, first_visit_monte_carlo, kwargs={'n_eps': 50, 'eps_len': 10})
-    value_function, policy = policy_iteration(
-        test.env, test.agent, every_visit_monte_carlo, kwargs={'n_eps': 50, 'eps_len': 10})
-    value_function, policy = policy_iteration(
-         test.env, test.agent, temporal_difference, kwargs={'n_samp':1000, 'step_size': 0.1})
+    #value_function, policy = policy_iteration(
+    #    test.env, test.agent, every_visit_monte_carlo, kwargs={'n_eps': 50, 'eps_len': 10})
+    #value_function, policy = policy_iteration(
+    #     test.env, test.agent, temporal_difference, kwargs={'n_samp':1000, 'step_size': 0.1})

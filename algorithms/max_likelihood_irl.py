@@ -61,6 +61,8 @@ def max_likelihood_irl(D, mdp, step_size = 0.01, eps=1e-02, max_steps=float("inf
         # compute state-action feature counts under current optimal policy
         mu, mu_sa = get_feature_counts(mdp, policy, tol=1.0e-03)
 
+        #print(mdp.nA, likelihoods.shape, mu_sa.shape)
+        #print(sa_traj)
         # get likelihood gradient
         grad = beta*np.sum(np.array([(mu_sa[s, a] - np.sum(np.array([likelihoods[s, b]*mu_sa[s, b] for b in range(mdp.nA)]), axis=0))
                                 for s, a in sa_traj]), axis=0)

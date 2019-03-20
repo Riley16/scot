@@ -8,8 +8,8 @@ from util import det2stoch_policy
 
 class Cooridor(object):
     def __init__(self):
-        cooridor_width = 6
-        cooridor_height = 3
+        cooridor_width = 5
+        cooridor_height = 5
         squares = []
         for i in range(cooridor_width):
             new_square = [int(cooridor_height / 2), i]
