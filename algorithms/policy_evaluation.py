@@ -144,7 +144,7 @@ def first_visit_monte_carlo(wrapper, n_eps:int, eps_len:int):
 
 
 @rename('Temporal Difference learning')
-def temporal_difference(wrapper, n_samp, step_size=0.1, horizon=None):
+def temporal_difference(wrapper, n_samp, step_size=0.1, horizon=None, traj_limit=100):
     '''
     Learn the value function for a given MDP environment and policy with Temporal Difference learning
 
@@ -175,6 +175,7 @@ def temporal_difference(wrapper, n_samp, step_size=0.1, horizon=None):
     if horizon is None:
         horizon = float("inf")
 
+    num_trajs = 0
     for _ in range(n_samp):
         t += 1
         # sample next tuple
@@ -191,6 +192,10 @@ def temporal_difference(wrapper, n_samp, step_size=0.1, horizon=None):
             V_pi[next_state] = V_pi[next_state] + step_size * (end_reward - V_pi[next_state])
             curr_state = env.reset(s_start=None)
             # print(traj)
+            num_trajs += 1
+            if num_trajs > traj_limit:
+                break
+
             traj = []
         else:
             curr_state = next_state

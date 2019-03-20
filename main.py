@@ -65,16 +65,16 @@ def test_QLearning(test, policy_opt, values_opt, horizon, traj_limit):
 
     return policy_similarity, total_value_QL, total_value_est_QL, value_gain_QL, value_gain_est_QL
 
-def test_PI(test, policy_opt, values_opt, horizon, num_samples):
+def test_PI(test, policy_opt, values_opt, horizon, traj_limit):
     print("testPI")
     est_values_PI, policy_PI = policy_iteration(
-        test.env, test.agent, every_visit_monte_carlo, kwargs={'n_eps': 50, 'eps_len': horizon})
+        test.env, test.agent, every_visit_monte_carlo, kwargs={'n_eps': traj_limit, 'eps_len': horizon})
 
     #est_values_PI, policy_PI = policy_iteration(
-    #    test.env, test.agent, temporal_difference, kwargs={'n_samp':1000, 'step_size': 0.1, 'horizon': horizon})
+    #    test.env, test.agent, temporal_difference, kwargs={'n_samp':1000, 'step_size': 0.1, 'horizon': horizon, 'traj_limit': traj_limit})
 
     #est_values_PI, policy_PI = policy_iteration(
-    #    test.env, test.agent, first_visit_monte_carlo, kwargs={'n_eps': num_samples, 'eps_len': horizon})
+    #    test.env, test.agent, first_visit_monte_carlo, kwargs={'n_eps': traj_limit, 'eps_len': horizon})
     print('here')
 
 
