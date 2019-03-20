@@ -67,14 +67,14 @@ def test_QLearning(test, policy_opt, values_opt, horizon, traj_limit):
 
 def test_PI(test, policy_opt, values_opt, horizon, num_samples):
     print("testPI")
-    #est_values_PI, policy_PI = policy_iteration(
-        #test.env, test.agent, every_visit_monte_carlo, kwargs={'n_eps': 50, 'eps_len': horizon})
-
-    #est_values_PI, policy_PI = policy_iteration(
-     #   test.env, test.agent, temporal_difference, kwargs={'n_samp':1000, 'step_size': 0.1, 'horizon': horizon})
-
     est_values_PI, policy_PI = policy_iteration(
-        test.env, test.agent, first_visit_monte_carlo, kwargs={'n_eps': int(num_samples / horizon), 'eps_len': horizon})
+        test.env, test.agent, every_visit_monte_carlo, kwargs={'n_eps': 50, 'eps_len': horizon})
+
+    #est_values_PI, policy_PI = policy_iteration(
+    #    test.env, test.agent, temporal_difference, kwargs={'n_samp':1000, 'step_size': 0.1, 'horizon': horizon})
+
+    #est_values_PI, policy_PI = policy_iteration(
+    #    test.env, test.agent, first_visit_monte_carlo, kwargs={'n_eps': num_samples, 'eps_len': horizon})
     print('here')
 
 
@@ -131,14 +131,14 @@ def test_baseline(test, policy_opt, values_opt, seed, horizon, num_samples):
     return policy_similarity, total_value_MLIRL, value_gain_MLIRL
 
 
-def test_scot(test, policy_opt, values_opt, seed, horizon, num_samples):
+def test_scot(test, policy_opt, values_opt, seed, horizon, traj_limit):
     trajs = scot(test.env, test.env.weights, H=horizon, seed=seed, verbose=False)
     lens = []
     for t in trajs:
         lens.append(len(t))
-    print("num_samples", num_samples)
-    if len(trajs) > num_samples:
-        trajs = sample(trajs, num_samples)
+    print("traj_limit", traj_limit)
+    if len(trajs) > traj_limit:
+        trajs = sample(trajs, traj_limit)
     # student's inferred reward function from the trajectories from SCOT
     r_weights = max_likelihood_irl(trajs, test.env, step_size=0.2, eps=1.0e-03, max_steps=1000, verbose=False)
 
@@ -175,7 +175,7 @@ def main():
 
 
     horizon = 20
-    traj_limit = 1
+    traj_limit = 30
     #print(test_scot(test, policy_opt, values_opt, seed, horizon))
     #print(test_PI(test, policy_opt, values_opt, horizon))
 
@@ -209,26 +209,27 @@ def main():
 
         print(i)
         #MLIRL_policy_similarity, total_value_MLIRL, value_gain_MLIRL = test_scot(test, policy_opt, values_opt, i, horizon, traj_limit)
-        #PI_policy_similarity, total_value_PI, total_value_est_PI, value_gain_PI, value_gain_est_PI = test_PI(test, policy_opt, values_opt, horizon, traj_limit)
-        QL_policy_similarity, total_value_QL, total_value_est_QL, value_gain_QL, value_gain_est_QL = test_QLearning(test, policy_opt, values_opt, horizon, traj_limit)
+        #exit(0)
+        PI_policy_similarity, total_value_PI, total_value_est_PI, value_gain_PI, value_gain_est_PI = test_PI(test, policy_opt, values_opt, horizon, traj_limit)
+        #QL_policy_similarity, total_value_QL, total_value_est_QL, value_gain_QL, value_gain_est_QL = test_QLearning(test, policy_opt, values_opt, horizon, traj_limit)
         #baseline_policy_similarity, total_value_baseline, value_gain_baseline  = test_baseline(test, policy_opt, values_opt, i, horizon, traj_limit)
 
         #MLIRL_policy_similarity_list.append(MLIRL_policy_similarity)
         #total_value_MLIRL_list.append(total_value_MLIRL)
         #value_gain_MLIRL_list.append(value_gain_MLIRL)
 
-        #PI_policy_similarity_list.append(PI_policy_similarity)
-        #total_value_PI_list.append(total_value_PI)
-        #total_value_est_PI_list.append(total_value_est_PI)
-        #value_gain_PI_list.append(value_gain_PI)
-        #value_gain_est_PI_list.append(value_gain_est_PI)
-
+        PI_policy_similarity_list.append(PI_policy_similarity)
+        total_value_PI_list.append(total_value_PI)
+        total_value_est_PI_list.append(total_value_est_PI)
+        value_gain_PI_list.append(value_gain_PI)
+        value_gain_est_PI_list.append(value_gain_est_PI)
+        """
         QL_policy_similarity_list.append(QL_policy_similarity)
         total_value_QL_list.append(total_value_QL)
         total_value_est_QL_list.append(total_value_est_QL)
         value_gain_QL_list.append(value_gain_QL)
         value_gain_est_QL_list.append(value_gain_est_QL)
-        """
+        
 
         baseline_policy_similarity_list.append(baseline_policy_similarity)
         total_value_baseline_list.append(total_value_baseline)
@@ -238,11 +239,11 @@ def main():
     print("total_value_MLIRL", np.mean(total_value_MLIRL_list), np.var(total_value_MLIRL_list))
     print("value_gain_MLIRL", np.mean(value_gain_MLIRL_list), np.var(value_gain_MLIRL_list))
 
-    #print("PI_policy_similarity", np.mean(PI_policy_similarity_list), np.var(PI_policy_similarity_list))
-    #print("total_value_PI", np.mean(total_value_PI_list), np.var(total_value_PI_list))
-    #print("total_value_est_PI", np.mean(total_value_est_PI_list), np.var(total_value_est_PI_list))
-    #print("value_gain_PI", np.mean(value_gain_PI_list), np.var(value_gain_PI_list))
-    #print("value_gain_est_PI", np.mean(value_gain_est_PI_list), np.var(value_gain_est_PI_list))
+    print("PI_policy_similarity", np.mean(PI_policy_similarity_list), np.var(PI_policy_similarity_list))
+    print("total_value_PI", np.mean(total_value_PI_list), np.var(total_value_PI_list))
+    print("total_value_est_PI", np.mean(total_value_est_PI_list), np.var(total_value_est_PI_list))
+    print("value_gain_PI", np.mean(value_gain_PI_list), np.var(value_gain_PI_list))
+    print("value_gain_est_PI", np.mean(value_gain_est_PI_list), np.var(value_gain_est_PI_list))
 
     print("QL_policy_similarity", np.mean(QL_policy_similarity_list), np.var(QL_policy_similarity_list))
     print("total_value_QL", np.mean(total_value_QL_list), np.var(total_value_QL_list))
