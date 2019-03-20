@@ -34,7 +34,7 @@ def every_visit_monte_carlo(wrapper, n_eps:int, eps_len:int):
 
     assert eps_len > 0
 
-    for _ in range(eps_len):
+    for _ in range(n_eps):
         # sample an episode
         _, traj = wrapper.eval_episodes(1, s_start=None, horizon=eps_len)
         traj = traj[0] # each step is (s, a, r, s')
