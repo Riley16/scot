@@ -8,7 +8,7 @@ def rename(newname):
 
 
 @rename('Q-learning')
-def q_learning(wrapper, n_samp, step_size=0.1, epsilon=0.1, horizon=None):
+def q_learning(wrapper, n_samp, step_size=0.1, epsilon=0.1, horizon=None, traj_limit=100):
     '''
     Learn optimal value function given an MDP environment with Q-learning under a greedy epsilon policy
 
@@ -38,7 +38,7 @@ def q_learning(wrapper, n_samp, step_size=0.1, epsilon=0.1, horizon=None):
     Q = np.zeros((nS, nA), dtype=np.float32)
     env.reset()
     curr_state = env.start
-
+    num_trajs = 0
     for _ in range(n_samp):
         # sample next tuple
         t += 1
@@ -60,12 +60,15 @@ def q_learning(wrapper, n_samp, step_size=0.1, epsilon=0.1, horizon=None):
             Q[next_state] = Q[next_state] + step_size * (end_reward - Q[next_state])
             curr_state = env.reset(s_start=None)
             t = 0
+            num_trajs += 1
+            if num_trajs > traj_limit:
+                break
         else:
             curr_state = next_state
 
     V = np.max(Q, axis=1)
     policy = np.argmax(Q, axis=1)
-    return V, Q, policy
+    return V, Q, policy, num_trajs
 
 
 if __name__ == '__main__':

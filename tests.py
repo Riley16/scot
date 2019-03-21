@@ -8,8 +8,8 @@ from util import det2stoch_policy
 
 class Cooridor(object):
     def __init__(self):
-        cooridor_width = 6
-        cooridor_height = 3
+        cooridor_width = 5
+        cooridor_height = 5
         squares = []
         for i in range(cooridor_width):
             new_square = [int(cooridor_height / 2), i]
@@ -158,11 +158,11 @@ class Random(object):
     ''' 9x9 Grid environment with one hot features. '''
 
     def __init__(self):
-        self.env = Grid(3, 3, 0.9, white_r=-1, gen_features="random", noise=0.0, n_features=2, weights="random",
+        self.env = Grid(5, 5, 0.9, white_r=-1, gen_features="random", noise=0.0, n_features=3, weights="random",
                         start_corner=False)
         self.policy = self.init_policy()
         self.agent = Agent(self.policy, self.env.nS, self.env.nA)
-        self.wrapper = Wrapper(self.env, self.agent, log=True)
+        self.wrapper = Wrapper(self.env, self.agent, log=False)
 
     def init_policy(self):
         _, policy = value_iteration(self.env)
@@ -224,10 +224,10 @@ class BrownNiekum(object):
 
         self.policy = self.init_policy()
         self.agent = Agent(self.policy, self.env.nS, self.env.nA)
-        self.wrapper = Wrapper(self.env, self.agent, log=True)
+        self.wrapper = Wrapper(self.env, self.agent, log=False)
 
     def init_policy(self):
         _, policy = value_iteration(self.env)
-        # print('Policy from VI: {}'.format(policy))
+        print('Policy from VI: {}'.format(policy))
         policy = det2stoch_policy(policy, self.env.nS, self.env.nA)
         return policy

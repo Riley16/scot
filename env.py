@@ -221,7 +221,7 @@ class Grid(object):
         ''' Outputs state to console '''
         for h in range(self.board.shape[0]):
             s = [str(val) for val in self.board[h, :]]
-            print(s)
+            #print(s)
 
     def state_to_grid(self, s):
         return s // self.board.shape[1], s % self.board.shape[1]

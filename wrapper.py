@@ -20,9 +20,9 @@ class Wrapper(object):
 
             total_r.append(R)
             trajectories.append(traj)
-            if self.log:
-                print("Agent log: {}".format(self.env.log))
-                print("Agent trajectory: {}".format(self.env.traj))
+            #if self.log:
+                #print("Agent log: {}".format(self.env.log))
+                #print("Agent trajectory: {}".format(self.env.traj))
         return total_r, trajectories
 
     def eval_episode(self, s_start=None, horizon=None):
