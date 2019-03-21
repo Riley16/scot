@@ -12,7 +12,7 @@ To run initial test cases, including those outlined in (Brown and Niekum, 2019),
 ```
 python3 main.py
 ```
-> Other small test cases are in `toy_tasks.py`
+> See `algorithms` folder for all our reinforcement learning algorithms.
 
 ## References
 - [Machine Teaching for Inverse Reinforcement Learning: Algorithms and Applications](https://arxiv.org/pdf/1805.07687.pdf)
